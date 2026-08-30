@@ -57,6 +57,48 @@ function installMainThreadCounter(onCount: (n: number) => void): () => void {
   };
 }
 
+/**
+ * The count the disclosure is allowed to show, as a pure function so it can be
+ * tested without a renderer or a worker.
+ *
+ * It exists because the hook shipped `mainRequests + workerRequests`, a total
+ * accumulated since PAGE LOAD, under a sentence reading "since then this page has
+ * made no requests". On a real load that rendered `7` directly above the claim that
+ * the number was zero. The requests it was counting were the ones that fetched the
+ * checker itself, which is exactly the traffic the sentence already accounts for and
+ * excludes.
+ *
+ * `PRODUCT.md` principle 6 is the rule this broke: never show a number the app
+ * cannot vouch for. A visitor cannot audit our architecture, so the only thing
+ * carrying the privacy claim is whether the page contradicts itself in public. A
+ * wrong `7` there is more damaging than showing nothing at all.
+ *
+ * `null` means "do not render a count", and every caller must treat it that way
+ * rather than coercing it to zero:
+ *   - still booting or degraded, so "since ready" has no meaning yet
+ *   - a fetch is in flight, so any number printed now is already stale
+ *   - no baseline was captured, which should be unreachable once ready
+ *
+ * `Math.max(0, ...)` is not defensive noise. `baseline` is snapshotted from refs, so
+ * it holds the newest count, while `total` comes from rendered state. A `net` message
+ * batched with `ready` can leave `total` one render behind `baseline`, and a
+ * momentary negative would be a worse lie than a momentary zero.
+ */
+export function requestsSinceReady({
+  total,
+  baseline,
+  ready,
+  inflight,
+}: {
+  total: number;
+  baseline: number | null;
+  ready: boolean;
+  inflight: number;
+}): number | null {
+  if (!ready || inflight !== 0 || baseline === null) return null;
+  return Math.max(0, total - baseline);
+}
+
 export function useEngine(rules: readonly PolicyRule[] = COMPANY_RULES): Engine {
   const [status, setStatus] = useState<EngineStatus>({ kind: "booting", pct: 0 });
   const [exemplars, setExemplars] = useState<Map<string, Float32Array[]> | null>(null);
@@ -69,8 +111,24 @@ export function useEngine(rules: readonly PolicyRule[] = COMPANY_RULES): Engine 
   const nextId = useRef(0);
   const startedAt = useRef(0);
 
+  /*
+   * Refs shadow the two counters because the baseline has to be captured INSIDE the
+   * `ready` handler, and state read there is the value from the last render rather
+   * than the value the `net` message just delivered. Both counters report an absolute
+   * running total, so a ref mirroring the latest one needs no accumulation logic.
+   *
+   * `readyBaseline` stays a ref on purpose: it must not trigger a render, and the
+   * `setStatus` that accompanies `ready` already causes one.
+   */
+  const mainCount = useRef(0);
+  const workerCount = useRef(0);
+  const readyBaseline = useRef<number | null>(null);
+
   useEffect(() => {
-    const restore = installMainThreadCounter(setMainRequests);
+    const restore = installMainThreadCounter((n) => {
+      mainCount.current = n;
+      setMainRequests(n);
+    });
     startedAt.current = performance.now();
 
     /**
@@ -127,12 +185,18 @@ export function useEngine(rules: readonly PolicyRule[] = COMPANY_RULES): Engine 
           break;
         }
         case "net":
+          workerCount.current = data.count ?? 0;
           setWorkerRequests(data.count ?? 0);
           setInflight(data.inflight ?? 0);
           break;
         case "ready":
           clearTimeout(stall);
           setInflight(0);
+          /* Snapshot BEFORE `setStatus`, and from the refs rather than from state:
+             everything fetched up to this instant is the checker arriving, which the
+             disclosure's sentence already describes. Only what follows is traffic the
+             visitor has a reason to care about. */
+          readyBaseline.current = mainCount.current + workerCount.current;
           setStatus({
             kind: "ready",
             device: data.device,
@@ -257,8 +321,12 @@ export function useEngine(rules: readonly PolicyRule[] = COMPANY_RULES): Engine 
   return {
     status,
     scan,
-    requestsSinceReady:
-      status.kind === "ready" && inflight === 0 ? mainRequests + workerRequests : null,
+    requestsSinceReady: requestsSinceReady({
+      total: mainRequests + workerRequests,
+      baseline: readyBaseline.current,
+      ready: status.kind === "ready",
+      inflight,
+    }),
     rules,
   };
 }
