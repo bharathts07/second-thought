@@ -148,10 +148,16 @@ export function remediationOptions(
  * shorthand. Mixing `border` with `border-l-2` leaves the left width decided by
  * Tailwind's internal sort order, and the 2px severity rule is too load-bearing
  * to rest on that.
+ *
+ * Presence comes from four things and no fifth: a raised surface, a hairline box,
+ * the one elevation token, and padding generous enough that the card is obviously
+ * a different kind of object from the composer above it. `animate-rise-in` is the
+ * 140ms fade-and-rise from globals.css, which is the only flourish this product
+ * spends anywhere, because this is the moment the product exists for.
  */
 const CARD_BASE =
   "animate-rise-in rounded-lg bg-raised shadow-raised border-t border-r border-b border-l-2 " +
-  "border-t-hairline border-r-hairline border-b-hairline p-4 sm:p-5";
+  "border-t-hairline border-r-hairline border-b-hairline p-4 sm:p-6";
 
 const CARD_RULE: Record<Severity, string> = {
   high: "border-l-severity-high-border",
@@ -160,13 +166,31 @@ const CARD_RULE: Record<Severity, string> = {
 };
 
 /**
+ * The 11px label register, used for every small label on this card without
+ * exception: the eyebrow, the section headings over each remedy, and the
+ * provenance line. Medium weight, +0.04em, secondary or muted ink, never
+ * capitalised. Capitals at this size read as a system announcing something, and
+ * an announcement is the register the card is built to avoid.
+ */
+const LABEL_CLASS = "text-2xs font-medium tracking-label";
+
+/**
  * One class constant, used by both actions. This is T3.2.4 in the only form that
  * cannot rot: there is no second button style in this file to promote one to.
  * Full width on narrow screens per §11, auto once there is room.
+ *
+ * `transition-control` rather than `transition-quiet`: the hover changes a
+ * background, and `transition-quiet` animates opacity and movement only, so the
+ * hover this button has always declared has never actually transitioned.
+ *
+ * The hover deliberately does not touch the border. `--border-edge` is a lighter
+ * line than `--border-control`, so brightening the boundary on hover would drop it
+ * under the 3:1 that 1.4.11 asks of a control's edge; the background carries the
+ * state instead.
  */
 const ACTION_CLASS =
-  "w-full sm:w-auto rounded-md border border-control bg-surface px-3 py-2 " +
-  "text-sm font-medium text-ink transition-quiet hover:bg-sunken";
+  "w-full sm:w-auto rounded-md border border-control bg-surface px-4 py-2 " +
+  "text-sm font-medium text-ink transition-control hover:bg-sunken";
 
 type FindingCardProps = {
   finding: Finding;
@@ -193,22 +217,30 @@ export function FindingCard({
       aria-labelledby={titleId}
       className={`${CARD_BASE} ${CARD_RULE[finding.severity]}`}
     >
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-2xs font-medium tracking-label text-ink-muted">
-          {COPY.heading}
-        </p>
+      {/* The card's own header row, closed with a hairline. §7's sketch puts the
+          heading and the severity in the card's top edge, and a rule under them is
+          the honest version of that: it separates what this object is from what it
+          has to say, which is what gives the card structure at a glance. */}
+      <div className="flex items-center justify-between gap-3 border-b border-hairline pb-3">
+        <p className={`${LABEL_CLASS} text-ink-muted`}>{COPY.heading}</p>
         <SeverityChip severity={finding.severity} />
       </div>
 
-      {/* Title first, reason second, wording third, actions last (T3.2.3). */}
-      <h3
-        id={titleId}
-        className="mt-3 text-lg font-semibold tracking-tight text-ink"
-      >
+      {/*
+        Title first, reason second, wording third, actions last (T3.2.3), and the
+        spacing is what makes that an order rather than a sequence: 4px between the
+        title and its reason, which belong together, then 16px and 24px as the card
+        moves to a different kind of content. Even spacing would render the same
+        five elements with no hierarchy at all.
+
+        `tracking-heading` is -0.006em, for 18px. The 22px `tracking-tight` this
+        used is enough to look squeezed at this size.
+      */}
+      <h3 id={titleId} className="mt-4 text-lg font-semibold tracking-heading text-ink">
         {finding.title}
       </h3>
 
-      <p className="mt-2 text-md text-ink-secondary">{finding.why}</p>
+      <p className="mt-1 max-w-reading text-md text-ink-secondary">{finding.why}</p>
 
       {/* Quoted inside the card, so a non-visual visitor never has to go and
           find an underline in the composer (§10).
@@ -216,35 +248,36 @@ export function FindingCard({
           severity `-wash` for the flagged span in the composer and nowhere else,
           and the filled surface in this card belongs to the SUGGESTION, which
           T3.2.3 wants visually distinct from the visitor's own sentence. */}
-      <blockquote className="mt-3 border-l border-l-hairline pl-3 text-base text-ink-secondary">
+      <blockquote className="mt-4 max-w-reading border-l border-l-hairline pl-4 text-base text-ink-secondary">
         &ldquo;{finding.matchedText}&rdquo;
       </blockquote>
 
-      <ul className="mt-4 flex flex-col gap-4">
+      <ul className="mt-6 flex flex-col gap-6">
         {options.map((option, index) => (
           <li key={option.id}>
             {option.heading ? (
-              <p className="text-xs font-medium text-ink-secondary">
-                {option.heading}
-              </p>
+              <p className={`${LABEL_CLASS} text-ink-secondary`}>{option.heading}</p>
             ) : null}
 
             {/* A quotation with its own sunken surface, never an editable field
-                (T3.2.5). It is a suggestion to accept, not a form to fill in. */}
+                (T3.2.5). It is a suggestion to accept, not a form to fill in.
+                Primary ink at 16px on a sunken fill: this is the one sentence on
+                the card the visitor is being offered, so it is the most legible
+                thing on it after the title. */}
             {option.pending ? (
-              <p className="mt-1 text-sm text-ink-muted">{COPY.preparing}</p>
+              <p className="mt-2 text-sm text-ink-muted">{COPY.preparing}</p>
             ) : option.text ? (
-              <blockquote className="mt-1 rounded-md border border-hairline bg-sunken px-3 py-2 text-md text-ink">
+              <blockquote className="mt-2 max-w-reading rounded-md border border-hairline bg-sunken px-4 py-3 text-md text-ink">
                 {option.text}
               </blockquote>
             ) : null}
 
             {option.provenance ? (
-              <p className="mt-1 text-2xs text-ink-muted">{option.provenance}</p>
+              <p className={`mt-2 ${LABEL_CLASS} text-ink-muted`}>{option.provenance}</p>
             ) : null}
 
             {option.pending ? null : (
-              <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
                 <button
                   type="button"
                   className={ACTION_CLASS}
@@ -271,9 +304,18 @@ export function FindingCard({
 
       {/* Stays visible. It is what distinguishes this from a keyword filter in a
           viewer's mind (§7), and muted ink on this raised surface is the one
-          pairing tokens.css measured for it. */}
-      <p className="mt-4 text-2xs text-ink-muted">
-        {prefix} · <span className="font-mono">{detail}</span>
+          pairing tokens.css measured for it: 6.02 light · 5.09 dark, the worst case
+          in the system and still clear of 4.5:1.
+
+          A hairline above it, because this line is a different kind of statement
+          from everything over it: the card's argument is for the visitor, and this
+          is the machine showing its working. `tabular-nums` so the score's digits
+          are the same width, which is the difference between a number that looks
+          measured and one that looks typed. */}
+      <p
+        className={`mt-6 border-t border-hairline pt-4 ${LABEL_CLASS} text-ink-muted`}
+      >
+        {prefix} · <span className="font-mono tabular-nums">{detail}</span>
       </p>
     </section>
   );

@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 /**
  * The product.
  *
@@ -284,9 +286,30 @@ export default function Home() {
     <div className="mx-auto flex min-h-screen w-full max-w-app flex-col gap-6 px-4 py-6 sm:px-6 sm:py-10">
       {/* No channel sidebar: it is the layout signature of specific commercial
           products and it is unnecessary here (T4.1.6). */}
-      <header>
-        <p className="text-lg font-semibold tracking-tight text-ink">{COPY.title}</p>
-        <p className="mt-1 text-sm text-ink-secondary">{COPY.subtitle}</p>
+      {/* The routes existed before anything linked to them, so /press and
+          /settings were reachable only by typing a URL. Settings in particular
+          has to be reachable from here: a tool that reads what you type owes you
+          the ability to see every rule it applies. */}
+      <header className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
+        <div>
+          <p className="text-lg font-semibold tracking-tight text-ink">{COPY.title}</p>
+          <p className="mt-1 text-sm text-ink-secondary">{COPY.subtitle}</p>
+        </div>
+        <nav aria-label="Site" className="flex items-center gap-4 text-sm text-ink-secondary">
+          <Link href="/press" className="transition-control hover:text-ink hover:underline">
+            Press
+          </Link>
+          <Link href="/settings" className="transition-control hover:text-ink hover:underline">
+            Rules
+          </Link>
+          <a
+            href="https://github.com/bharathts07/second-thought"
+            className="transition-control hover:text-ink hover:underline"
+            rel="noreferrer"
+          >
+            GitHub
+          </a>
+        </nav>
       </header>
 
       <main>

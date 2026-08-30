@@ -170,7 +170,16 @@ export function internalGuidanceLine(rules: readonly PolicyRule[]): string {
   return `${COPY.internalOpening} ${body[0].toUpperCase()}${body.slice(1)}.`;
 }
 
-const NOTE_CLASS = "text-sm text-ink-secondary";
+/**
+ * Every line this region can show instead of a card, on one class.
+ *
+ * They arrive by the same 140ms fade-and-rise the cards use, because they arrive
+ * for the same reason and at the same moment. `Nothing to flag.` snapping into
+ * place while a card two seconds earlier faded in would read as two different
+ * products. The reading measure matters for the internal line in particular, which
+ * is a derived sentence that grows with the rule set.
+ */
+const NOTE_CLASS = "animate-rise-in max-w-reading text-sm text-ink-secondary";
 
 type GuidancePanelProps = {
   /** Already filtered to text that still exists and to what is not suppressed. */
@@ -201,10 +210,10 @@ export function GuidancePanel({
       aria-label={COPY.guidanceLabel}
       /* Reserved from first paint. Empty, it holds exactly one status line's
          worth of height rather than collapsing to zero (§2). */
-      className="mt-4 min-h-guidance"
+      className="mt-5 min-h-guidance"
     >
       {shown.length > 0 ? (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4">
           {shown.map((finding) => (
             <FindingCard
               key={`${finding.ruleId}:${finding.start}:${finding.end}`}

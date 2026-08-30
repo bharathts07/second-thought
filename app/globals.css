@@ -56,6 +56,10 @@
   --font-weight-medium: var(--weight-medium);
   --font-weight-semibold: var(--weight-semibold);
   --tracking-tight: var(--letter-spacing-tight);
+  /* Named `heading` rather than `snug` on purpose: Tailwind ships a default
+   * `tracking-snug`, and a token that silently replaces a built-in utility is a
+   * trap for whoever reads the class name and expects the default. */
+  --tracking-heading: var(--letter-spacing-heading);
   --tracking-label: var(--letter-spacing-label);
 
   /* Surfaces and ink. `text-ink-muted` rather than `text-text-muted`, which is
@@ -134,10 +138,19 @@
   }
 }
 
-/* Opacity and transform only, at the one duration. Anything that needs a
- * different property is a decision, not a convenience, and should say why. */
+/*
+ * Opacity and movement only, at the one duration. Anything that needs a different
+ * property is a decision, not a convenience, and should say why.
+ *
+ * `translate` and `scale` are listed alongside `transform` because Tailwind 4
+ * emits the standalone properties: `translate-x-full` compiles to
+ * `translate: 100% 0`, not to a `transform`. A list naming only `transform`
+ * therefore declares a transition and then lets the movement snap, which is the
+ * exact defect this utility exists to prevent, and it is invisible in review
+ * because the class name still says `transition`.
+ */
 @utility transition-quiet {
-  transition-property: opacity, transform;
+  transition-property: opacity, transform, translate, scale;
   transition-duration: var(--duration-base);
   transition-timing-function: var(--easing-out);
 }
@@ -152,6 +165,34 @@
 @media (prefers-reduced-motion: reduce) {
   .transition-quiet {
     transition-property: opacity;
+  }
+}
+
+/*
+ * The other half of "states transition rather than snap".
+ *
+ * `transition-quiet` animates opacity and transform, which is right for a card
+ * arriving and wrong for a button being hovered: a hover that only changes
+ * `background-color` was declared transitional and then snapped anyway, because
+ * the property it changes was not in the list. Every hover in this product did
+ * that before this utility existed.
+ *
+ * Colour, background, border, and outline, at the one duration and the one curve.
+ * Transform rides along so a control can do both without a second class, and
+ * reduced motion drops only the transform: a hover that stops changing colour at
+ * all reads as a dead control, which is not what that preference asks for.
+ */
+@utility transition-control {
+  transition-property: color, background-color, border-color, outline-color,
+    text-decoration-color, opacity, transform, translate, scale;
+  transition-duration: var(--duration-base);
+  transition-timing-function: var(--easing-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .transition-control {
+    transition-property: color, background-color, border-color, outline-color,
+      text-decoration-color, opacity;
   }
 }
 
@@ -179,6 +220,39 @@
   min-height: var(--guidance-min-height);
 }
 
+/* The load block between the composer and the send row. Reserved so the send
+ * button does not walk up the page when the download finishes and the booting
+ * state's second line goes away. */
+@utility min-h-status {
+  min-height: var(--status-min-height);
+}
+
+/* The download's progress rule. A determinate bar, never a spinner (T3.4.2), at
+ * the same weight as the card's severity rule. */
+@utility progress-track {
+  height: var(--progress-height);
+}
+
+/*
+ * The recipient switch's sliding indicator.
+ *
+ * The geometry is here rather than in the component because it has to be exact
+ * and it has to be explained. The track is `p-1` around two equal grid columns,
+ * so column one spans 4px..50% and column two spans 50%..(100% - 4px). An
+ * indicator inset by 4px with width `50% - 4px` covers column one exactly, and
+ * `translateX(100%)` moves it by its own width, landing its left edge at
+ * 4px + 50% - 4px = 50%: column two, exactly. That is why the width is a calc
+ * and not `w-1/2`, which would overshoot by the track's own padding and leave the
+ * indicator 4px past the right edge.
+ */
+@utility segment-indicator {
+  position: absolute;
+  top: var(--space-1);
+  bottom: var(--space-1);
+  left: var(--space-1);
+  width: calc(50% - var(--space-1));
+}
+
 @layer base {
   html {
     font-family: var(--typeface-ui);
@@ -195,6 +269,28 @@
     font-size: var(--font-size-base);
     line-height: var(--line-height-base);
     letter-spacing: var(--letter-spacing-normal);
+  }
+
+  /*
+   * Line breaking, decided once for the whole product.
+   *
+   * `balance` on headings because a card title that wraps to a second line
+   * carrying one word is the most common way a careful layout looks careless, and
+   * every title here is short enough for the browser's balancer to be cheap.
+   * `pretty` on prose only asks the browser to avoid a last-line orphan, which is
+   * the same problem one paragraph down.
+   */
+  h1,
+  h2,
+  h3,
+  h4 {
+    text-wrap: balance;
+  }
+
+  p,
+  blockquote,
+  li {
+    text-wrap: pretty;
   }
 
   /*
@@ -260,6 +356,10 @@
     --severity-medium-wash: Canvas;
     --severity-low-wash: Canvas;
     --accent-quiet: Canvas;
+    /* The selected segment's boundary and the progress rule are the two places
+     * where a fill would be the only carrier of meaning, and a fill is exactly
+     * what this mode takes away. Both fall back to a system-coloured line. */
+    --accent: CanvasText;
     --severity-high-border: CanvasText;
     --severity-medium-border: CanvasText;
     --severity-low-border: CanvasText;

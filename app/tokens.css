@@ -62,14 +62,27 @@
   --font-size-3xl: 2.25rem; /* 36px: press h1 */
   --font-size-prose: 1.0625rem; /* 17px: press body, serif, long-form only */
 
+  /*
+   * Leading is where the rhythm lives, and it is not one ratio applied to nine
+   * sizes. Small UI labels want tight leading so a two-line label reads as one
+   * object; prose wants air; a heading wants LESS air than the prose under it, so
+   * that a title which wraps still reads as a single block rather than as two
+   * lines of text that happen to be near each other.
+   *
+   * So the ratios fall rather than rise as the size grows:
+   *   2xs 11/16 1.45 · xs 12/18 1.50 · sm 13/20 1.54 · base 15/24 1.60
+   *   md  16/26 1.63  (prose: the card's reason, the suggested wording)
+   *   lg  18/26 1.44  (heading: the card title, the product name)
+   *   xl  22/28 1.27  2xl 28/34 1.21  3xl 36/42 1.17
+   */
   --line-height-2xs: 1rem;
   --line-height-xs: 1.125rem;
   --line-height-sm: 1.25rem;
   --line-height-base: 1.5rem;
-  --line-height-md: 1.5625rem;
-  --line-height-lg: 1.75rem;
-  --line-height-xl: 1.875rem;
-  --line-height-2xl: 2.25rem;
+  --line-height-md: 1.625rem;
+  --line-height-lg: 1.625rem;
+  --line-height-xl: 1.75rem;
+  --line-height-2xl: 2.125rem;
   --line-height-3xl: 2.625rem;
   --line-height-prose: 1.65; /* unitless: press prose reflows at any size */
 
@@ -79,7 +92,18 @@
   --weight-medium: 500;
   --weight-semibold: 600;
 
+  /*
+   * Tracking follows size, in the direction optical size demands: large type
+   * needs it pulled in, small type needs it opened out. Three named steps rather
+   * than a per-component judgement call.
+   *
+   * `-heading` exists because the card title is 18px, and -0.012em at that size
+   * closes the counters enough to read as cramped while doing nothing visible at
+   * 22px+. It is the difference between a heading that looks set and one that
+   * looks squeezed, which is most of what "finished" means in type.
+   */
   --letter-spacing-tight: -0.012em; /* headings 22px and up only */
+  --letter-spacing-heading: -0.006em; /* 17-21px: the card title, the product name */
   --letter-spacing-normal: 0;
   --letter-spacing-label: 0.04em; /* the severity chip and small caps labels */
 
@@ -98,14 +122,42 @@
   --space-12: 3rem; /* 48 */
   --space-16: 4rem; /* 64 */
 
-  /* Measures. Prose lands in the 65-75 character band T3.5.1 asks for. */
+  /* Sets the rules table's minimum width. NOT the prose measure: `ch` is the
+     advance of the `0` glyph rather than an average character, so 68ch
+     measured 72-84 characters per line. Prose uses 58ch, which lands 66-75. */
   --measure-app: 46rem;
   --measure-prose: 68ch;
 
-  /* The guidance region reserves this much from first paint, so a card
-   * appearing never moves the composer under a typing cursor (ux-spec §2).
-   * Empty, it holds exactly the status line. */
+  /*
+   * Two reserved heights, both for the same reason: nothing above a control the
+   * visitor is using may change size while they use it.
+   *
+   * `--guidance-min-height` holds the region below the composer from first paint,
+   * so the page does not lurch when the first card arrives (ux-spec §2). It is
+   * deliberately one line rather than a whole card: reserving 200px of blank
+   * space to avoid a reflow BELOW the composer would trade a small jump for a
+   * permanent hole. The composer's own stillness comes from document order, since
+   * the guidance region is its next sibling and can only push what is under it.
+   *
+   * `--status-min-height` is the load-state block between the composer and the
+   * send row, and this one is load-bearing: it holds the progress rule, the status
+   * line, and the booting state's second line, so the send button does not walk up
+   * the page the moment the download finishes and that second line goes away.
+   */
   --guidance-min-height: 2.75rem;
+  /*
+   * 52px, which is the booting state measured rather than estimated: a 2px rule,
+   * 8px, a 20px line, 4px, and an 18px line. It was 48px until the browser was
+   * asked, and the 4px difference was a visible hop of the send row at the exact
+   * moment the download finished, which is the one moment the reservation exists
+   * to cover.
+   */
+  --status-min-height: 3.25rem;
+
+  /* The progress rule under the composer while the model downloads. Same weight
+   * as the card's severity rule: the product has one line weight above hairline
+   * and this is it. */
+  --progress-height: 0.125rem;
 
   /* ---------------------------------------------------------------------
    * Shape and line weights.
@@ -225,6 +277,20 @@
  *   --accent-strong   links and selected labels:      8.00 / 8.56                ·  8.94 on surface
  *   --accent-quiet    the selected segment's fill. --accent-strong on it reads
  *                     7.45 · 6.69, --text-primary 15.54 · 11.45
+ *
+ * Two more pairings, measured for the polish pass rather than assumed:
+ *
+ *   --accent on --border-subtle       4.22 light · 5.64 dark   the progress rule
+ *                                     on its own track, which needs 3:1 as a
+ *                                     meaningful non-text indicator (1.4.11).
+ *   --accent-quiet on --surface-sunken  1.02 light · 1.39 dark   FAILS 3:1.
+ *
+ * That second number is the reason the recipient switch's sliding indicator
+ * carries a 1px `--accent` border and not only its fill. The fill alone is
+ * invisible against the track it slides in, so a segmented control built from the
+ * fill would convey the selected state through the label's colour and nothing
+ * else. With the border it reads at --accent on --surface-sunken, 4.71 light ·
+ * 7.12 dark, and the selected label still says it in --accent-strong on top.
  */
 :root {
   --accent: light-dark(#3a63d8, #7d9bf5);
@@ -254,6 +320,7 @@
  *   medium-border on --surface-raised  3.98 · 4.49      (needs 3:1)
  *   --text-primary on any wash        14.88 · 12.12 high, 15.21 · 11.90 medium,
  *                                     15.41 · 13.27 low
+ *   low-text (= --text-secondary) on its own chip  8.41 · 7.50
  */
 :root {
   --severity-high-text: light-dark(#9d3a48, #e79aa4);

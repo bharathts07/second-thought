@@ -43,8 +43,22 @@ const CHIP_TONE: Record<Severity, string> = {
   low: "bg-severity-low-quiet text-severity-low",
 };
 
+/**
+ * The hairline is what makes this read as a chip rather than as tinted words.
+ *
+ * The `-quiet` fills sit around 1.03:1 against the card they are placed on, which
+ * is deliberate (a legible severity fill at this size would be the loud read the
+ * whole product avoids) but it means the fill alone gives the chip no edge. A 1px
+ * neutral boundary gives it one without adding colour, and it is also what keeps
+ * the chip shaped in forced-colours mode, where the fill collapses to `Canvas`.
+ *
+ * Not uppercased, though a 11px tracked label is the obvious move. `High` next to
+ * `Worth a second thought` is a rank, and a rank set in capitals starts to look
+ * like the thing shouting at you.
+ */
 const CHIP_BASE =
-  "inline-flex shrink-0 items-center rounded-full px-2 py-1 text-2xs font-medium tracking-label";
+  "inline-flex shrink-0 items-center rounded-full border border-hairline px-2 py-1 " +
+  "text-2xs font-medium tracking-label";
 
 export function SeverityChip({ severity }: { severity: Severity }) {
   return (
