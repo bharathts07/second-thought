@@ -425,7 +425,7 @@ describe("harness footguns that would silently mislead a test", () => {
       "we guarantee your data never leaves the US",
       "can you confirm our data stays inside the US",
       "I'll ship the migration by Friday",
-      "let's move this thread to Signal",
+      "let's move this thread to my personal phone",
       "the internal roadmap slide is attached",
       "this vendor is a total dumpster fire",
       "nous pouvons vous aider avec la migration",
