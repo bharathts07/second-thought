@@ -9,22 +9,42 @@
  * `var(--surface)` into each utility instead of copying the value, so a single
  * `light-dark()` declaration in tokens.css keeps governing and a pinned
  * `data-theme` keeps working. Copying values would freeze the light scheme into
- * every class name and quietly recreate the inverted-afterthought dark mode
- * this system exists to avoid.
+ * every class name and quietly recreate the inverted-afterthought dark mode this
+ * system exists to avoid.
  *
- * Tailwind's own colour palette is still reachable (`bg-red-500` and friends).
- * It is NOT part of this design system. Severity is rose and ochre at chip and
- * hairline scale, never a filled panel, and nothing in the product needs a hue
- * that is not below. Reviewing for a stray `bg-red-500` is cheaper than
- * deleting the palette and breaking a sibling module's `bg-white`.
+ * Tailwind's own colour palette is still reachable (`bg-red-500` and friends) and
+ * it is NOT part of this design system: using one is a defect. Severity is rose,
+ * amber and neutral, at chip and hairline scale only, never a filled panel and
+ * never a coloured side stripe. Reviewing for a stray palette colour is cheaper
+ * than deleting the palette and breaking a sibling module's `bg-white`.
  */
 @theme inline {
   /* 4px base, so `p-2` is 8px and `gap-3` is 12px. No arbitrary values. */
   --spacing: 0.25rem;
 
+  /*
+   * The rhythm scale, as spacing utilities: `gap-rhythm-block`,
+   * `py-rhythm-section`, `px-bubble-x`. These exist so a component can join the
+   * system instead of picking a number, and so the place where the rhythm changes
+   * (12 to 20, within-group to between-group) is a name rather than a habit.
+   */
+  --spacing-rhythm-inline: var(--rhythm-inline);
+  --spacing-rhythm-stack-tight: var(--rhythm-stack-tight);
+  --spacing-rhythm-stack: var(--rhythm-stack);
+  --spacing-rhythm-block: var(--rhythm-block);
+  --spacing-rhythm-section: var(--rhythm-section);
+  --spacing-rhythm-page: var(--rhythm-page);
+  --spacing-bubble-x: var(--pad-bubble-x);
+  --spacing-bubble-y: var(--pad-bubble-y);
+  --spacing-guidance-x: var(--pad-guidance-x);
+  --spacing-guidance-y: var(--pad-guidance-y);
+  --spacing-control-x: var(--pad-control-x);
+  --spacing-control-y: var(--pad-control-y);
+  --spacing-composer: var(--pad-composer);
+
   /* The primitives in tokens.css are named `--typeface-*`, `--corner-*`,
-   * `--easing-*`, and `--letter-spacing-*` precisely so that mapping them here
-   * is not a self-reference. `--font-ui: var(--font-ui)` inside `@theme inline`
+   * `--easing-*` and `--letter-spacing-*` precisely so that mapping them here is
+   * not a self-reference. `--font-ui: var(--font-ui)` inside `@theme inline`
    * would emit a circular declaration into `:root` and silently drop the font. */
   --font-ui: var(--typeface-ui);
   --font-sans: var(--typeface-ui);
@@ -81,51 +101,91 @@
   --color-accent-strong: var(--accent-strong);
   --color-accent-quiet: var(--accent-quiet);
 
+  /*
+   * Severity. The `-edge` colours are the ones to reach for: they are the FULL
+   * hairline border around the guidance surface, written `border
+   * border-severity-high-edge`. The `-border` names below them are retired
+   * aliases from the banned 2px left stripe and exist only so nothing breaks
+   * mid-flight; `border-l-2 border-l-severity-high-border` is the defect this
+   * pass removes.
+   */
   --color-severity-high: var(--severity-high-text);
-  --color-severity-high-border: var(--severity-high-border);
+  --color-severity-high-edge: var(--severity-high-edge);
   --color-severity-high-quiet: var(--severity-high-quiet);
   --color-severity-high-wash: var(--severity-high-wash);
   --color-severity-medium: var(--severity-medium-text);
-  --color-severity-medium-border: var(--severity-medium-border);
+  --color-severity-medium-edge: var(--severity-medium-edge);
   --color-severity-medium-quiet: var(--severity-medium-quiet);
   --color-severity-medium-wash: var(--severity-medium-wash);
   --color-severity-low: var(--severity-low-text);
-  --color-severity-low-border: var(--severity-low-border);
+  --color-severity-low-edge: var(--severity-low-edge);
   --color-severity-low-quiet: var(--severity-low-quiet);
   --color-severity-low-wash: var(--severity-low-wash);
+  --color-severity-high-border: var(--severity-high-border);
+  --color-severity-medium-border: var(--severity-medium-border);
+  --color-severity-low-border: var(--severity-low-border);
 
   --radius-sm: var(--corner-sm);
   --radius-md: var(--corner-md);
   --radius-lg: var(--corner-lg);
+  --radius-bubble: var(--corner-bubble);
   --radius-full: var(--corner-full);
 
   --shadow-raised: var(--elevation-raised);
 
+  /* `ease-out` is the default curve and resolves to quart. `ease-out-expo` is
+   * for the one movement that should settle rather than stop. */
   --ease-out: var(--easing-out);
-  --animate-rise-in: rise-in var(--duration-base) var(--easing-out) both;
-  --animate-fade-out: fade-out var(--duration-fast) var(--easing-out) both;
+  --ease-out-quart: var(--easing-out-quart);
+  --ease-out-expo: var(--easing-out-expo);
 
-  /* `max-w-app` for the single column, `max-w-reading` for press prose. */
+  --animate-rise-in: rise-in var(--duration-base) var(--easing-out-expo) both;
+  --animate-message-in: message-in var(--duration-base) var(--easing-out-quart) both;
+  --animate-fade-out: fade-out var(--duration-fast) var(--easing-out-quart) both;
+  --animate-typing-dot: typing-dot var(--duration-typing) var(--easing-out-quart) infinite;
+  --animate-skeleton: skeleton-pulse var(--duration-typing) var(--easing-out-quart) infinite;
+
+  /* `max-w-app` for the single column, `max-w-bubble` for a message, and
+   * `max-w-reading` / `min-w-reading` for press prose and the rules table. */
   --container-app: var(--measure-app);
+  --container-bubble: var(--measure-bubble);
   --container-reading: var(--measure-prose);
 }
 
 /*
- * The two animations this product has. Both are declared here rather than in a
- * component so that there is one enter and one exit, applied without exception.
+ * The animations this product has. All of them are declared here rather than in a
+ * component so there is one enter, one exit, and one loading loop, applied without
+ * exception.
  *
- * `rise-in` reads `--motion-rise`, which reduced motion sets to 0. The fade
- * survives; the movement does not. That satisfies `prefers-reduced-motion`
- * without a second keyframe set that could drift from this one.
+ * `rise-in` and `message-in` read `--motion-rise` and `--motion-rise-message`,
+ * which reduced motion sets to 0. The fade survives; the movement does not. That
+ * satisfies `prefers-reduced-motion` without a second keyframe set that could
+ * drift from this one.
+ *
+ * They use the standalone `translate` property rather than `transform`, for the
+ * same reason the transition utilities below list both: Tailwind 4 compiles
+ * movement to `translate`, and mixing the two means a component that sets
+ * `translate` while a keyframe animates `transform` gets neither.
  */
 @keyframes rise-in {
   from {
     opacity: 0;
-    transform: translateY(var(--motion-rise));
+    translate: 0 var(--motion-rise);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    translate: 0 0;
+  }
+}
+
+@keyframes message-in {
+  from {
+    opacity: 0;
+    translate: 0 var(--motion-rise-message);
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
   }
 }
 
@@ -139,6 +199,37 @@
 }
 
 /*
+ * The typing indicator's dots, and the skeleton's pulse. These are the only loops
+ * in the product and both exist to answer the same question, "is it still
+ * working", which is the one thing a spinner does that nothing else does. A
+ * spinner is still banned in content: these are a shaped indicator and a skeleton
+ * of the thing that is coming.
+ *
+ * Opacity only, so reduced motion has nothing to strip except the loop itself
+ * (handled below), and the dots stay visible either way.
+ */
+@keyframes typing-dot {
+  0%,
+  60%,
+  100% {
+    opacity: 0.35;
+  }
+  30% {
+    opacity: 1;
+  }
+}
+
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/*
  * Opacity and movement only, at the one duration. Anything that needs a different
  * property is a decision, not a convenience, and should say why.
  *
@@ -147,46 +238,49 @@
  * `translate: 100% 0`, not to a `transform`. A list naming only `transform`
  * therefore declares a transition and then lets the movement snap, which is the
  * exact defect this utility exists to prevent, and it is invisible in review
- * because the class name still says `transition`.
+ * because the class name still says `transition`. This was a real bug here.
  */
 @utility transition-quiet {
   transition-property: opacity, transform, translate, scale;
   transition-duration: var(--duration-base);
-  transition-timing-function: var(--easing-out);
+  transition-timing-function: var(--easing-out-quart);
 }
 
 /*
  * `--motion-rise: 0` covers the keyframes, but a transition is not a keyframe:
- * `transition-quiet` would still animate whatever transform a component sets.
- * Reduced motion therefore drops transform from the transition and keeps
- * opacity, which is the letter of T3.1.6 rather than the part of it the rise
- * token happens to cover.
+ * `transition-quiet` would still animate whatever movement a component sets.
+ * Reduced motion therefore drops movement from the transition and keeps opacity,
+ * and it stops the two loops, which is the letter of the preference rather than
+ * the part of it the rise tokens happen to cover.
  */
 @media (prefers-reduced-motion: reduce) {
   .transition-quiet {
     transition-property: opacity;
+  }
+
+  .animate-typing-dot,
+  .animate-skeleton {
+    animation: none;
   }
 }
 
 /*
  * The other half of "states transition rather than snap".
  *
- * `transition-quiet` animates opacity and transform, which is right for a card
+ * `transition-quiet` animates opacity and movement, which is right for guidance
  * arriving and wrong for a button being hovered: a hover that only changes
  * `background-color` was declared transitional and then snapped anyway, because
  * the property it changes was not in the list. Every hover in this product did
  * that before this utility existed.
  *
- * Colour, background, border, and outline, at the one duration and the one curve.
- * Transform rides along so a control can do both without a second class, and
- * reduced motion drops only the transform: a hover that stops changing colour at
- * all reads as a dead control, which is not what that preference asks for.
+ * Colour, background, border and outline, at the fast duration, because the
+ * pointer is already on the control and a slower change reads as lag.
  */
 @utility transition-control {
   transition-property: color, background-color, border-color, outline-color,
     text-decoration-color, opacity, transform, translate, scale;
-  transition-duration: var(--duration-base);
-  transition-timing-function: var(--easing-out);
+  transition-duration: var(--duration-fast);
+  transition-timing-function: var(--easing-out-quart);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -198,9 +292,9 @@
 
 /*
  * The three durations as utilities. Without these, a transition that is not
- * `transition-quiet` has to spell a duration inline, and `duration-[140ms]` or
- * `duration-(--duration-base)` is exactly the arbitrary value T3.1.3 rules out.
- * Tailwind has no theme namespace for duration, so a utility is the only seam.
+ * `transition-quiet` has to spell a duration inline, and `duration-[175ms]` is
+ * exactly the arbitrary value this system rules out. Tailwind has no theme
+ * namespace for duration, so a utility is the only seam.
  */
 @utility duration-fast {
   transition-duration: var(--duration-fast);
@@ -214,8 +308,15 @@
   transition-duration: var(--duration-slow);
 }
 
-/* The guidance region holds this much from first paint so that a card arriving
- * never shifts the composer under a live cursor. */
+/* Tabular numerals, for anything that counts or scores. A proportional digit set
+ * makes the download percentage and the provenance score jitter as they update,
+ * and a jittering number is the cheapest way to look unfinished. */
+@utility numerals-tabular {
+  font-variant-numeric: var(--numerals-ui);
+}
+
+/* The guidance region holds this much from first paint so that guidance arriving
+ * never shifts the draft under a live cursor. */
 @utility min-h-guidance {
   min-height: var(--guidance-min-height);
 }
@@ -227,8 +328,13 @@
   min-height: var(--status-min-height);
 }
 
-/* The download's progress rule. A determinate bar, never a spinner (T3.4.2), at
- * the same weight as the card's severity rule. */
+/* The typing indicator, sized as a one-line bubble so the reply lands exactly
+ * where the indicator was. */
+@utility min-h-typing {
+  min-height: var(--typing-min-height);
+}
+
+/* The download's progress rule. A determinate bar, never a spinner. */
 @utility progress-track {
   height: var(--progress-height);
 }
@@ -241,9 +347,8 @@
  * so column one spans 4px..50% and column two spans 50%..(100% - 4px). An
  * indicator inset by 4px with width `50% - 4px` covers column one exactly, and
  * `translateX(100%)` moves it by its own width, landing its left edge at
- * 4px + 50% - 4px = 50%: column two, exactly. That is why the width is a calc
- * and not `w-1/2`, which would overshoot by the track's own padding and leave the
- * indicator 4px past the right edge.
+ * 4px + 50% - 4px = 50%: column two, exactly. That is why the width is a calc and
+ * not `w-1/2`, which would overshoot by the track's own padding.
  */
 @utility segment-indicator {
   position: absolute;
@@ -274,11 +379,11 @@
   /*
    * Line breaking, decided once for the whole product.
    *
-   * `balance` on headings because a card title that wraps to a second line
-   * carrying one word is the most common way a careful layout looks careless, and
-   * every title here is short enough for the browser's balancer to be cheap.
-   * `pretty` on prose only asks the browser to avoid a last-line orphan, which is
-   * the same problem one paragraph down.
+   * `balance` on headings because a title that wraps to a second line carrying
+   * one word is the most common way a careful layout looks careless, and every
+   * title here is short enough for the browser's balancer to be cheap. `pretty`
+   * on prose only asks the browser to avoid a last-line orphan, which is the
+   * same problem one paragraph down.
    */
   h1,
   h2,
@@ -294,16 +399,24 @@
   }
 
   /*
-   * Focus is always visible for keyboard users (T3.6.3). The full keyboard path
-   * is a build constraint here, not a polish pass, and an invisible ring is how
-   * that quietly stops being true. The offset keeps the ring clear of a
-   * control's own border so both stay readable.
+   * The second seam for tabular numerals, alongside the `numerals-tabular`
+   * utility: any element carrying `data-numeric` gets them. An attribute is the
+   * right hook for a value that is interpolated into a sentence, where reaching
+   * for a class means wrapping a fragment in a span for styling alone.
+   */
+  [data-numeric] {
+    font-variant-numeric: var(--numerals-ui);
+  }
+
+  /*
+   * Focus is always visible for keyboard users. The full keyboard path is a build
+   * constraint here, not a polish pass, and an invisible ring is how that quietly
+   * stops being true. The offset keeps the ring clear of a control's own border so
+   * both stay readable.
    *
    * There is exactly one `outline: none` in this project, immediately below, and
    * it is scoped to `:focus:not(:focus-visible)` so it can never suppress a
-   * keyboard ring. That is the only form the declaration may take; an
-   * `outline: none` on `:focus` or on `:focus-visible`, anywhere, is the defect
-   * T3.6.3 forbids.
+   * keyboard ring. That is the only form the declaration may take.
    */
   :focus-visible {
     outline: var(--focus-ring-width) solid var(--focus-ring);
@@ -343,9 +456,14 @@
 }
 
 /*
- * Forced-colours mode. Severity is always a text label as well as a colour
- * (T3.6.1), so nothing is lost here; these overrides only stop a wash or a chip
- * fill from turning into an unreadable block once the system takes over colour.
+ * Forced-colours mode. Severity is always a word as well as a colour, so nothing
+ * is lost here; these overrides only stop a wash or a chip fill from turning into
+ * an unreadable block once the system takes over colour.
+ *
+ * The `-edge` tokens fall back to `CanvasText` rather than disappearing, because
+ * the guidance surface's full border is what makes it read as one object attached
+ * to the draft. Losing the fill is fine. Losing the boundary would leave the
+ * guidance floating.
  */
 @media (forced-colors: active) {
   :root {
@@ -360,9 +478,9 @@
      * where a fill would be the only carrier of meaning, and a fill is exactly
      * what this mode takes away. Both fall back to a system-coloured line. */
     --accent: CanvasText;
-    --severity-high-border: CanvasText;
-    --severity-medium-border: CanvasText;
-    --severity-low-border: CanvasText;
+    --severity-high-edge: CanvasText;
+    --severity-medium-edge: CanvasText;
+    --severity-low-edge: CanvasText;
     --focus-ring: Highlight;
     --shadow-tint: transparent;
   }

@@ -280,7 +280,7 @@ export const EXAMPLE_REPLIES: Record<ThreadMode, readonly ExampleReply[]> = {
  * neither, so every hover in this composer used to snap while claiming not to.
  */
 const QUIET_BUTTON =
-  "rounded-full border border-hairline bg-surface px-3 py-2 text-xs text-ink-secondary transition-control hover:bg-sunken hover:text-ink";
+  "shrink-0 whitespace-nowrap rounded-full border border-hairline bg-surface px-3 py-2 text-xs text-ink-secondary transition-control hover:bg-sunken hover:text-ink";
 
 /**
  * Send is the one filled control in the product, and that is a considered
@@ -300,8 +300,36 @@ const QUIET_BUTTON =
  * than moving up the ramp.
  */
 const SEND_CLASS =
-  "w-full shrink-0 rounded-md border border-accent-strong bg-accent-strong px-4 py-2 " +
-  "text-sm font-medium text-ink-inverse transition-control hover:border-accent hover:bg-accent sm:w-auto";
+  "w-auto shrink-0 rounded-md border border-accent-strong bg-accent-strong px-4 py-2 " +
+  "text-sm font-medium text-ink-inverse transition-control hover:border-accent hover:bg-accent";
+
+/**
+ * The send label reserves the width of the longer of the two words it can be, and
+ * that reservation is load-bearing rather than tidy.
+ *
+ * `Send` becomes `Send anyway` at the exact moment an unresolved HIGH appears,
+ * which is the same moment guidance opens. That is 48px more button, taken out of
+ * the `flex-1` examples row beside it, which wrapped to a second line and made the
+ * whole pinned composer 41px taller. Pinned to the bottom of the viewport, a taller
+ * composer has a HIGHER top edge: the field the visitor is mid-sentence in jumped up
+ * under their cursor precisely when the product was supposed to be unobtrusive.
+ * Measured in a browser at 1512px, 39px row to 80px.
+ *
+ * A 1x1 grid with both labels stacked is the fix, because it sizes the control to
+ * the widest string it will ever hold without naming a pixel width that would need
+ * re-measuring every time the copy changes. The reserve copy is `aria-hidden`, so
+ * the accessible name stays the one visible word.
+ */
+function SendLabel({ label }: { label: string }) {
+  return (
+    <span className="grid">
+      <span aria-hidden="true" className="invisible col-start-1 row-start-1">
+        {COPY.sendAnyway}
+      </span>
+      <span className="col-start-1 row-start-1 text-center">{label}</span>
+    </span>
+  );
+}
 
 /** The composer itself, and the ghost overlay, which must keep identical padding. */
 const FIELD_PADDING = "px-4 py-3";
@@ -361,13 +389,16 @@ export function Composer({
   };
 
   return (
-    <div className="mt-4">
+    <div>
       <div className="relative">
         <textarea
           ref={textareaRef}
           aria-label={COPY.composerLabel}
           value={draft}
-          rows={3}
+          /* Two rows, not three. The field is pinned to the bottom of the viewport
+             now, so every row it holds is a row of the conversation the visitor
+             cannot see, and it is still `resize-y` for anyone who wants more. */
+          rows={2}
           onChange={(event) => onDraftChange(event.target.value)}
           onKeyDown={(event) => {
             /* Enter inserts the hint only while the composer is empty (§4).
@@ -400,12 +431,44 @@ export function Composer({
       </div>
 
       {/*
+        One row on every screen, because the composer is pinned and every row it
+        grows is a row of the conversation the visitor cannot see. At ~390px three
+        stacked example pills plus a full-width send took a third of the phone. The
+        examples scroll sideways instead, bleeding to the edges so the row reads as
+        scrollable rather than clipped, and they wrap normally once there is room.
+      */}
+      <div className="mt-3 flex items-start gap-3">
+        <div
+          role="group"
+          aria-label={COPY.examplesLabel}
+          className="-mx-4 flex min-w-0 flex-1 gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-x-visible sm:px-0 sm:pb-0"
+        >
+          {EXAMPLE_REPLIES[mode].map((example) => (
+            <button
+              key={example.id}
+              type="button"
+              className={QUIET_BUTTON}
+              onClick={() => insert(example.text)}
+            >
+              {example.label}
+            </button>
+          ))}
+        </div>
+
+        <SendControl label={label} revealNote={highUnresolved} onSend={onSend} />
+      </div>
+
+      {/*
         The first ten seconds of this product, which are the ten seconds every
         visitor sees and the ones most likely to be spent on nothing.
 
-        Reserved height, so the send row does not move when the download finishes
-        and the booting state's second line goes away. Nothing above the composer
-        changes at all, which is what keeps the composer itself still (§2).
+        It sits BELOW the send row now rather than between the field and the actions.
+        The composer is pinned to the bottom of the viewport, so the quietest line in
+        it belongs at the quietest edge, and putting it last means the send button
+        cannot move when the booting state's second line goes away. The reserved
+        height stays, because the pinned bar's own height must not change either:
+        without it the whole composer would step down the screen when the download
+        finishes (§2).
       */}
       <div className="mt-3 min-h-status">
         {line.pct === undefined ? null : <ProgressRule pct={line.pct} />}
@@ -427,23 +490,6 @@ export function Composer({
             <p className="mt-1 max-w-reading text-xs text-ink-muted">{line.detail}</p>
           ) : null}
         </div>
-      </div>
-
-      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div role="group" aria-label={COPY.examplesLabel} className="flex flex-wrap gap-2">
-          {EXAMPLE_REPLIES[mode].map((example) => (
-            <button
-              key={example.id}
-              type="button"
-              className={QUIET_BUTTON}
-              onClick={() => insert(example.text)}
-            >
-              {example.label}
-            </button>
-          ))}
-        </div>
-
-        <SendControl label={label} revealNote={highUnresolved} onSend={onSend} />
       </div>
     </div>
   );
@@ -515,23 +561,23 @@ function SendControl({
 
   if (!revealNote || noteOpen) {
     return (
-      <div className="flex w-full flex-col gap-2 sm:w-auto sm:items-end">
+      <div className="flex shrink-0 flex-col items-end gap-2">
         {noteOpen ? (
           /* Arrives by the same fade-and-rise as everything else that appears in
              this product. A control that materialises instantly beside one that
              fades reads as two different pieces of software. */
-          <label className="animate-rise-in flex w-full flex-col gap-1 text-xs text-ink-secondary sm:w-80">
+          <label className="animate-rise-in flex w-52 flex-col gap-1 text-xs text-ink-secondary sm:w-80">
             {COPY.notePrompt}
             <input
               type="text"
               value={note}
               onChange={(event) => setNote(event.target.value)}
-              className="rounded-md border border-control bg-surface px-3 py-2 text-sm text-ink transition-control"
+              className="w-full rounded-md border border-control bg-surface px-3 py-2 text-sm text-ink transition-control"
             />
           </label>
         ) : null}
         <button type="button" className={SEND_CLASS} onClick={send}>
-          {label}
+          <SendLabel label={label} />
         </button>
       </div>
     );
@@ -539,7 +585,7 @@ function SendControl({
 
   return (
     <button type="button" className={SEND_CLASS} onClick={() => setNoteOpen(true)}>
-      {label}
+      <SendLabel label={label} />
     </button>
   );
 }

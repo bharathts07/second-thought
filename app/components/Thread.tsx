@@ -1,5 +1,18 @@
 /**
- * The conversation surface: header, participant line, badge, message list.
+ * The conversation surface: header, participant line, badge, message list, and the
+ * two things that hang off the end of it, the counterparty's typing indicator and
+ * the pending draft.
+ *
+ * **It is no longer a panel.** The bordered, filled container this used to be made
+ * the page read as a stack of identical cards, and worse, it competed with the one
+ * object on the page that should be lifted: the pending draft with its guidance.
+ * The conversation is now plain content on the canvas, separated by a hairline
+ * under its header, so the draft surface is the only bordered thing in view.
+ *
+ * **The mobile collapse is gone.** §11 hid all but the two most recent messages at
+ * ~390px, which made sense when the thread was static. Now the counterparty answers,
+ * so hiding history means a narrow screen can never see the conversation it is part
+ * of. The page scrolls instead, which is what a phone does anyway.
  *
  * **There are TWO threads, and the recipient switcher swaps which one renders**
  * (ux-spec §3, F25). Not one thread with a toggle over it. With a single thread,
@@ -19,6 +32,7 @@
  */
 
 import type { RecipientKind } from "@/app/lib/types";
+import { TypingIndicator } from "./TypingIndicator";
 
 /** Which of the two conversations is on screen. Two, not three: see RecipientSwitch. */
 export type ThreadMode = "internal" | "external";
@@ -153,21 +167,10 @@ function Badge({ text }: { text: string }) {
  * Consecutive messages from one author render the meta line once. Priya's two
  * seeded messages are the case that proves it: repeating her name directly under
  * her name is the sort of thing a real client would never ship.
- *
- * `mobileOnly` is the narrow-screen exception, and it has to be a display rule
- * rather than a different value of `showMeta` because one DOM tree serves both
- * layouts. When the row that survives the ~390px collapse is itself a
- * continuation, mobile needs the name (it is the top of the visible thread) and
- * desktop must NOT have it (the row above is the same author, still on screen).
- * Send three messages in a row and this is the case: without the `sm:hidden`,
- * `You` renders again 8px under `You` on a wide screen, which is the exact defect
- * the grouping exists to prevent.
  */
-function MessageMeta({ message, mobileOnly }: { message: Message; mobileOnly?: boolean }) {
+function MessageMeta({ message }: { message: Message }) {
   return (
-    <div
-      className={`flex items-baseline justify-between gap-3 ${mobileOnly ? "sm:hidden" : ""}`}
-    >
+    <div className="flex items-baseline justify-between gap-3">
       <p
         className={`text-xs font-medium ${message.mine ? "text-ink" : "text-ink-secondary"}`}
       >
@@ -186,35 +189,39 @@ function MessageMeta({ message, mobileOnly }: { message: Message; mobileOnly?: b
 export function Thread({
   thread,
   onReset,
+  typingFrom,
+  pending,
   children,
 }: {
   thread: ThreadData;
   onReset: () => void;
+  /**
+   * Who is writing back, or undefined. Present only while a canned reply is on its
+   * way, which is the whole reason the wait reads as a person rather than as a
+   * stall.
+   */
+  typingFrom?: string;
+  /**
+   * The pending draft and its guidance, rendered at the end of the conversation
+   * because that is where the message being written belongs. A slot rather than a
+   * prop bundle: this component knows nothing about findings, and keeping it that
+   * way is what lets the seeded threads be asserted on in a Node test.
+   */
+  pending?: React.ReactNode;
   /** The recipient switcher, which belongs inside the header per §2's wireframe. */
   children?: React.ReactNode;
 }) {
   const messages = thread.messages;
-  /**
-   * §11 keeps the most recent two messages at ~390px by hiding the earlier ones in
-   * CSS. Which means the author line cannot be grouped away on the first message
-   * that survives that: on a narrow screen it would be the top of the thread with
-   * nobody's name on it. So the meta line is forced there, and where the grouping
-   * disagrees it is forced for the narrow layout only (see `MessageMeta`).
-   */
-  const firstKeptOnMobile = messages.length - 2;
 
   return (
-    <section
-      aria-label={thread.title}
-      className="rounded-lg border border-hairline bg-surface"
-    >
+    <section aria-label={thread.title}>
       {/*
         A quiet channel header (T3.3.1). The title is 16px semibold rather than the
         22px it was: this is chrome, and at 22px it was the largest thing on the
-        page, competing with the card that is supposed to be the loudest voice in
-        the interface. Hierarchy is what an object is next to, not what it is.
+        page, competing with the guidance that is supposed to be the loudest voice
+        in the interface. Hierarchy is what an object is next to, not what it is.
       */}
-      <header className="border-b border-hairline px-4 py-4 sm:px-5">
+      <header className="border-b border-hairline pb-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-md font-semibold text-ink">{thread.title}</h2>
           {thread.badge ? <Badge text={thread.badge} /> : null}
@@ -232,54 +239,25 @@ export function Thread({
         </div>
       </header>
 
-      {/* §11: at ~390px the thread collapses to the most recent two messages.
-          Hiding the earlier ones in CSS keeps one message list rather than two
-          that could disagree about what was sent.
-
-          The rhythm is 24px between speakers and 4px between a name and what they
+      {/* The rhythm is 24px between speakers and 4px between a name and what they
           said, so the gaps group the rows rather than sitting evenly and grouping
           nothing. A continuation from the same author closes to 8px, which is what
           makes two messages read as one turn. */}
-      <ol className="flex flex-col px-4 py-5 sm:px-5">
+      <ol className="flex flex-col pt-5">
         {messages.map((message, index) => {
           const previous = index > 0 ? messages[index - 1] : undefined;
           const continues = previous !== undefined && previous.from === message.from;
-          const showMeta = !continues || index === firstKeptOnMobile;
-          /**
-           * Written out per case rather than composed, because Tailwind scans source
-           * text and cannot see a class assembled from parts.
-           *
-           * The `mt-0 sm:` pair is for the row that is first on a narrow screen: its
-           * gap separates it from a message that is hidden there, so on mobile it
-           * would open 24px of space above the top of the thread.
-           */
-          const gap =
-            index === 0
-              ? ""
-              : index === firstKeptOnMobile
-                ? continues
-                  ? "mt-0 sm:mt-2"
-                  : "mt-0 sm:mt-6"
-                : continues
-                  ? "mt-2"
-                  : "mt-6";
 
           return (
             <li
               key={message.id}
-              className={`${index < firstKeptOnMobile ? "hidden sm:block" : ""} ${gap}`.trim()}
+              className={index === 0 ? "" : continues ? "mt-2" : "mt-6"}
             >
-              {showMeta ? (
-                <MessageMeta message={message} mobileOnly={continues} />
-              ) : null}
+              {continues ? null : <MessageMeta message={message} />}
               {/* A reading measure, because 15px running the full width of the app
-                  column is 95 characters and nobody reads that comfortably.
-                  The `sm:mt-0` pair goes with the meta line that only exists on
-                  mobile: the gap under it has to disappear where the line does. */}
+                  column is 95 characters and nobody reads that comfortably. */}
               <p
-                className={`max-w-reading text-base text-ink ${
-                  showMeta ? (continues ? "mt-1 sm:mt-0" : "mt-1") : ""
-                }`}
+                className={`max-w-reading text-base text-ink ${continues ? "" : "mt-1"}`}
               >
                 {message.text}
               </p>
@@ -287,6 +265,10 @@ export function Thread({
           );
         })}
       </ol>
+
+      {typingFrom ? <TypingIndicator from={typingFrom} /> : null}
+
+      {pending}
     </section>
   );
 }

@@ -8,16 +8,25 @@
  * noticeable in peripheral vision, calm on inspection, and never implying the
  * visitor did something wrong. They have not sent anything yet. So:
  *
- *   - There is no filled severity panel. The card is a raised neutral surface
- *     with a hairline box and a 2px severity rule down its left edge, which is
- *     the whole of the colour. A filled error container is the single thing most
- *     likely to make this read as a scold (`plan/03` "The design problem"), and
- *     tokens.css deliberately defines no `-panel` token to build one from.
+ *   - **It is no longer a card.** It is the lower zone of the pending draft's
+ *     surface, and it carries no border, no corner radius and no elevation of its
+ *     own, because a bordered card inside the bordered draft it describes is a
+ *     nested card, which is banned and which is what made the old layout read as
+ *     unfinished. `PendingDraft` owns the box; this owns what the box says.
+ *   - **Severity is carried by the chip and by the surrounding surface's tinted
+ *     hairline, never by a coloured side stripe and never by a fill.** The 2px
+ *     left rule this card used to draw is superseded: a coloured stripe on a card
+ *     signals template rather than intent, and a filled severity panel reads as a
+ *     scold when nothing has been sent.
  *   - `Use this` and `Keep mine` share one class constant, so they cannot drift
  *     apart into a primary button and a muted link. The moment one wins, the
  *     product is instructing rather than informing (T3.2.4, §7).
  *   - Every string comes from the §14 copy deck, checked against its banned list:
  *     no violation, breach, error, warning, alert, blocked, you must.
+ *   - **Every finding offers the way to its own rule.** Somebody who has just been
+ *     flagged is at the one moment they actually want to know what a rule is, so
+ *     the provenance line ends in a link to `/settings#rule-<id>`, which that page
+ *     already expands and scrolls to.
  *
  * Presentational only. It imports types and nothing else from the engine, takes
  * a `Finding` it does not interpret, and reports gestures upward.
@@ -31,8 +40,9 @@
  * no ref-driven focus call anywhere below.
  */
 
+import Link from "next/link";
 import { useId } from "react";
-import type { Finding, Severity } from "@/app/lib/types";
+import type { Finding } from "@/app/lib/types";
 import { SeverityChip } from "./SeverityChip";
 
 /** §14 copy deck. Transcribed, never composed, so wording is decided once. */
@@ -47,7 +57,18 @@ const COPY = {
   pattern: "pattern",
   fromCompany: "From your company",
   fromPersonal: "Your own rules",
+  editRule: "Edit this rule",
 } as const;
+
+/**
+ * The fragment `/settings` listens for. Built here rather than imported from
+ * `RuleRow` so this file keeps importing types and nothing else, but it has to stay
+ * in step with `ruleRowId`, which is the one thing that would break the deep link
+ * silently.
+ */
+export function ruleHref(ruleId: string): string {
+  return `/settings#rule-${ruleId}`;
+}
 
 /**
  * One way to resolve a finding.
@@ -144,26 +165,16 @@ export function remediationOptions(
 }
 
 /**
- * Widths and colours are declared per side rather than through the `border`
- * shorthand. Mixing `border` with `border-l-2` leaves the left width decided by
- * Tailwind's internal sort order, and the 2px severity rule is too load-bearing
- * to rest on that.
+ * No box, no radius, no elevation, no padding: all four belong to `PendingDraft`,
+ * which is the surface this is part of. What is left is the background, which is
+ * the SAME token the surface uses, so the two zones are one continuous fill rather
+ * than a card sitting inside a card.
  *
- * Presence comes from four things and no fifth: a raised surface, a hairline box,
- * the one elevation token, and padding generous enough that the card is obviously
- * a different kind of object from the composer above it. `animate-rise-in` is the
- * 140ms fade-and-rise from globals.css, which is the only flourish this product
- * spends anywhere, because this is the moment the product exists for.
+ * `animate-rise-in` is the 140ms fade-and-rise from globals.css, and it is the only
+ * flourish this product spends anywhere, because this is the moment the product
+ * exists for. Reduced motion flattens it to a fade.
  */
-const CARD_BASE =
-  "animate-rise-in rounded-lg bg-raised shadow-raised border-t border-r border-b border-l-2 " +
-  "border-t-hairline border-r-hairline border-b-hairline p-4 sm:p-6";
-
-const CARD_RULE: Record<Severity, string> = {
-  high: "border-l-severity-high-border",
-  medium: "border-l-severity-medium-border",
-  low: "border-l-severity-low-border",
-};
+const CARD_BASE = "animate-rise-in bg-raised";
 
 /**
  * The 11px label register, used for every small label on this card without
@@ -213,15 +224,13 @@ export function FindingCard({
   const { prefix, detail } = provenanceSegments(finding);
 
   return (
-    <section
-      aria-labelledby={titleId}
-      className={`${CARD_BASE} ${CARD_RULE[finding.severity]}`}
-    >
-      {/* The card's own header row, closed with a hairline. §7's sketch puts the
-          heading and the severity in the card's top edge, and a rule under them is
-          the honest version of that: it separates what this object is from what it
-          has to say, which is what gives the card structure at a glance. */}
-      <div className="flex items-center justify-between gap-3 border-b border-hairline pb-3">
+    <section aria-labelledby={titleId} className={CARD_BASE}>
+      {/* The eyebrow and the severity word, in the top edge of the guidance zone.
+          There is no hairline under them any more: the seam that separates this zone
+          from the draft above it is 16px higher, and a second rule directly beneath
+          the first would be the noise that makes a surface look busy rather than
+          structured. */}
+      <div className="flex items-center justify-between gap-3">
         <p className={`${LABEL_CLASS} text-ink-muted`}>{COPY.heading}</p>
         <SeverityChip severity={finding.severity} />
       </div>
@@ -267,7 +276,11 @@ export function FindingCard({
             {option.pending ? (
               <p className="mt-2 text-sm text-ink-muted">{COPY.preparing}</p>
             ) : option.text ? (
-              <blockquote className="mt-2 max-w-reading rounded-md border border-hairline bg-sunken px-4 py-3 text-md text-ink">
+              /* A fill and no border. The border made this read as a box inside a
+                 box now that the whole guidance zone sits inside the draft's own
+                 surface, and the fill alone is enough to say this sentence is the
+                 offer rather than the visitor's own words. */
+              <blockquote className="mt-2 max-w-reading rounded-md bg-sunken px-4 py-3 text-md text-ink">
                 {option.text}
               </blockquote>
             ) : null}
@@ -312,11 +325,25 @@ export function FindingCard({
           is the machine showing its working. `tabular-nums` so the score's digits
           are the same width, which is the difference between a number that looks
           measured and one that looks typed. */}
-      <p
-        className={`mt-6 border-t border-hairline pt-4 ${LABEL_CLASS} text-ink-muted`}
-      >
-        {prefix} · <span className="font-mono tabular-nums">{detail}</span>
-      </p>
+      <div className="mt-6 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-t border-hairline pt-4">
+        <p className={`${LABEL_CLASS} text-ink-muted`}>
+          {prefix} · <span className="font-mono tabular-nums">{detail}</span>
+        </p>
+
+        {/*
+          The answer to "what is a rule, and where do I see it", offered at the one
+          moment the question has a referent. An anchor rather than a button, because
+          it is navigation and because the two actions above must remain the only
+          buttons on this card: the instant a third appears, `Use this` and
+          `Keep mine` stop being the obvious pair of equals.
+        */}
+        <Link
+          href={ruleHref(finding.ruleId)}
+          className={`${LABEL_CLASS} shrink-0 rounded-sm text-ink-muted underline decoration-hairline underline-offset-2 transition-control hover:text-ink hover:decoration-control`}
+        >
+          {COPY.editRule}
+        </Link>
+      </div>
     </section>
   );
 }

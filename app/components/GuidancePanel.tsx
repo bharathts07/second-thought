@@ -1,12 +1,18 @@
 "use client";
 
 /**
- * The region below the composer: cards, the internal line, the clean line.
+ * What the guidance zone says: cards, the internal line, the clean line.
  *
- * Below the composer, never a modal and never a toast (T4.1.4). A modal implies
- * enforcement, and this product does not enforce. It also holds a minimum height
- * from first paint, so a card arriving never moves the composer under a live
- * cursor.
+ * **It now lives inside the pending draft's surface, not below the composer.** A
+ * client review found that guidance under the composer left the visitor to infer
+ * which sentence it was about; attached to the draft it describes, the relationship
+ * is structural. Never a modal and never a toast (T4.1.4): a modal implies
+ * enforcement, and this product does not enforce.
+ *
+ * This component no longer reserves height. It does not need to: the composer is
+ * sticky to the bottom of the viewport and sits outside the scrolling thread, so
+ * guidance can arrive at any size without moving the field under a live cursor,
+ * which is what `min-h-guidance` was standing in for.
  *
  * Two rules here are the ones that were previously got wrong in three documents
  * at once:
@@ -181,6 +187,29 @@ export function internalGuidanceLine(rules: readonly PolicyRule[]): string {
  */
 const NOTE_CLASS = "animate-rise-in max-w-reading text-sm text-ink-secondary";
 
+/**
+ * Whether this component will render anything at all.
+ *
+ * The pending draft needs to know before it lays itself out: with guidance it grows
+ * a seam and a second zone, and without it, it is a bubble and nothing else. Derived
+ * from the same four inputs the render below branches on, so the two cannot
+ * disagree, which they would within a week if the caller reimplemented the
+ * condition.
+ */
+export function hasGuidanceContent(args: {
+  findings: readonly Finding[];
+  kind: RecipientKind;
+  truncated: boolean;
+  clean: boolean;
+}): boolean {
+  return (
+    args.findings.length > 0 ||
+    args.kind === "internal" ||
+    args.clean ||
+    args.truncated
+  );
+}
+
 type GuidancePanelProps = {
   /** Already filtered to text that still exists and to what is not suppressed. */
   findings: readonly Finding[];
@@ -205,27 +234,32 @@ export function GuidancePanel({
   const { shown, overflow } = cappedFindings(findings);
 
   return (
-    <div
-      aria-live="polite"
-      aria-label={COPY.guidanceLabel}
-      /* Reserved from first paint. Empty, it holds exactly one status line's
-         worth of height rather than collapsing to zero (§2). */
-      className="mt-5 min-h-guidance"
-    >
+    <div aria-live="polite" aria-label={COPY.guidanceLabel}>
       {shown.length > 0 ? (
-        <div className="flex flex-col gap-4">
-          {shown.map((finding) => (
-            <FindingCard
+        <div className="flex flex-col">
+          {shown.map((finding, index) => (
+            /* Two findings on one draft are two zones of one surface, so a hairline
+               divides them rather than a gap between two boxes. Never above the
+               first: the seam from the draft is already there, and two rules 16px
+               apart is the kind of noise that makes a surface look busy instead of
+               structured. */
+            <div
               key={`${finding.ruleId}:${finding.start}:${finding.end}`}
-              finding={finding}
-              onAccept={(option) => onAccept(finding, option)}
-              onKeep={() => onKeep(finding)}
-            />
+              className={index === 0 ? "" : "mt-6 border-t border-hairline pt-6"}
+            >
+              <FindingCard
+                finding={finding}
+                onAccept={(option) => onAccept(finding, option)}
+                onKeep={() => onKeep(finding)}
+              />
+            </div>
           ))}
           {overflow > 0 ? (
-            <p className={NOTE_CLASS}>{overflowLine(overflow)}</p>
+            <p className={`mt-4 ${NOTE_CLASS}`}>{overflowLine(overflow)}</p>
           ) : null}
-          {truncated ? <p className={NOTE_CLASS}>{COPY.truncated}</p> : null}
+          {truncated ? (
+            <p className={`mt-4 ${NOTE_CLASS}`}>{COPY.truncated}</p>
+          ) : null}
         </div>
       ) : kind === "internal" ? (
         <p className={NOTE_CLASS}>{internalGuidanceLine(rules)}</p>

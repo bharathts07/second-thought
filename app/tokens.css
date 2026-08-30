@@ -1,19 +1,38 @@
 /*
  * Design tokens. The whole visual system is here, and nothing outside this file
- * may contain a raw colour, a raw spacing value, or a raw duration (T3.1.3
- * acceptance). If a value a component needs is not on a scale below, the scale
- * is wrong and this file changes.
+ * may contain a raw colour, a raw spacing value, or a raw duration. If a value a
+ * component needs is not on a scale below, the scale is wrong and this file
+ * changes.
  *
  * The brief this palette answers: the central moment in this product is an
  * INTERRUPTION, and the target is noticeable in peripheral vision, calm on
  * inspection, and never implying the visitor did something wrong. They have not
- * made a mistake yet; nothing has been sent. So severity is carried by a chip,
- * a hairline, and a 2px left rule at small sizes. There is no filled severity
- * panel token in this file, deliberately: a filled coloured container is the
- * single thing most likely to make the product read as a scold, and the way to
- * keep one out of the UI is to never define it.
+ * made a mistake yet; nothing has been sent.
  *
- * Two more standing rules that follow from the same place:
+ * Three things changed in this pass and each is a correction, not a preference:
+ *
+ *   1. OKLCH throughout, and every neutral carries a WARM tint (chroma 0.004 to
+ *      0.010). Cool grey was the reflex this project had drifted onto. The scene
+ *      that decides the theme is a bright open-plan office at 4pm, so light is
+ *      the primary scheme and the ground is warm paper rather than clinical grey.
+ *      There is no `#000` and no `#fff` anywhere below, deliberately: pure black
+ *      and pure white are the two values that make a neutral ramp read as a
+ *      default rather than as a decision.
+ *
+ *   2. The accent is a muted PLUM. Not blue (category reflex), not green (reads
+ *      success), not red (reads alarm, and alarm is the one register this product
+ *      must never enter). It marks the selected segment, the focus ring and the
+ *      primary action. Never decoration.
+ *
+ *   3. The 2px coloured left stripe that used to carry severity is GONE. A
+ *      coloured side stripe on a card reads as template rather than as intent. In
+ *      its place: a text chip that always says its word, plus a FULL hairline
+ *      border on the guidance surface tinted toward the severity hue at very low
+ *      chroma (`--severity-*-edge`). A full border is structural; a stripe is
+ *      decorative. A filled severity panel stays banned for a different reason:
+ *      it reads as a scold.
+ *
+ * Two standing rules that follow from the same place:
  *   - Greys carry almost all surface work. There is exactly ONE accent.
  *   - No gradients, and one elevation token. Restraint reads as competence for
  *     a product whose whole claim is that it sends nothing anywhere.
@@ -21,27 +40,31 @@
  * Scheme handling: every colour token is declared once, with both values on the
  * same line, via `light-dark()`. That is not a shortcut. It makes it structurally
  * impossible to add a token for one scheme and forget the other, which is how
- * dark modes become inverted afterthoughts. The manual toggle sets
- * `color-scheme` on the root (see the [data-theme] hooks at the end).
+ * dark modes become inverted afterthoughts. Dark here is designed rather than
+ * inverted: its surfaces climb in lightness for raised and fall for sunken, and
+ * its severity hues are lifted in lightness and cut in chroma, because a
+ * saturated rose on a dark ground reads as an alarm light.
  *
- * The support question was checked rather than assumed, because a colour system
- * that resolves to nothing is worse than an ugly one. Next's minifier downlevels
- * `light-dark()` into a custom-property toggle, so the built stylesheet contains
- * no `light-dark()` at all and both the automatic and the pinned scheme work
- * anywhere custom properties do. Verified by reading the emitted chunk, not by
- * reading a compatibility table.
+ * The support question was checked rather than assumed. Next's minifier
+ * downlevels `light-dark()` into a custom-property toggle, so the built
+ * stylesheet contains no `light-dark()` at all and both the automatic and the
+ * pinned scheme work anywhere custom properties do.
  */
 
 :root {
   /* ---------------------------------------------------------------------
-   * Type. One grotesque for UI, one genuine serif for the press page's
-   * prose, one mono for rule ids and score numerals in provenance lines.
+   * Type.
    *
-   * The `-hosted` indirection is the seam for self-hosted faces: whoever
-   * wires `next/font/local` sets `--typeface-ui-hosted` on the root and nothing
-   * else changes. Third-party font fetches are forbidden (T8), so until a
-   * face is vendored these resolve to system stacks, which is a fine place
-   * to be rather than a broken one.
+   * The product surface is one family: the system stack. That is a legitimate
+   * choice in product register rather than a compromise, and it retires the old
+   * "fonts are not self-hosted" item outright, since there is now nothing to
+   * host. The press page keeps a genuine serif, because long-form prose in
+   * brand register is a different job.
+   *
+   * The `-hosted` indirection stays as the seam for a vendored face: set
+   * `--typeface-ui-hosted` on the root and nothing else changes. It stays unset
+   * here, and the CSP does not permit a third-party font fetch, so no face
+   * arrives at runtime and the system stack is what every visitor sees.
    * ------------------------------------------------------------------- */
   --typeface-ui: var(--typeface-ui-hosted, ui-sans-serif, system-ui, -apple-system,
       "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
@@ -50,40 +73,53 @@
   --typeface-mono: var(--typeface-mono-hosted, ui-monospace, SFMono-Regular, Menlo,
       Consolas, "Liberation Mono", monospace);
 
-  /* Fixed scale. Sizes in rem so a visitor's own font size still governs. */
-  --font-size-2xs: 0.6875rem; /* 11px: severity chip, provenance line */
-  --font-size-xs: 0.75rem; /* 12px: timestamps, labels, badges */
-  --font-size-sm: 0.8125rem; /* 13px: status line, secondary UI */
-  --font-size-base: 0.9375rem; /* 15px: messages, composer, card body */
-  --font-size-md: 1rem; /* 16px: card `why`, suggested wording */
-  --font-size-lg: 1.125rem; /* 18px: card title, section headings */
-  --font-size-xl: 1.375rem; /* 22px: conversation title, press h2 */
-  --font-size-2xl: 1.75rem; /* 28px: press h1 on mobile */
-  --font-size-3xl: 2.25rem; /* 36px: press h1 */
+  /*
+   * Fixed rem ladder, and the ratio between consecutive steps is held between
+   * 1.125 and 1.2. The old scale ran 1.067 at the bottom and 1.29 at the top,
+   * which is two problems at once: steps so close they read as a mistake, and
+   * display sizes so far apart they read as a landing page.
+   *
+   * Measured ratios, each step over the one below it:
+   *   2xs->xs 1.125 · xs->sm 1.125 · sm->base 1.125 · base->md 1.125
+   *   md->lg  1.125 · lg->xl  1.185 · xl->2xl 1.200 · 2xl->3xl 1.200
+   *
+   * The band changes at `lg`, on purpose. Everything up to `lg` is product
+   * surface, where there are many type elements and exaggerated contrast becomes
+   * noise, so it holds the tight 1.125. `xl` and up appear only on the press
+   * page, where a heading has to carry an argument, so those steps open to 1.2.
+   */
+  --font-size-2xs: 0.702rem; /* 11.2px: severity chip, provenance line */
+  --font-size-xs: 0.79rem; /* 12.6px: timestamps, labels, badges */
+  --font-size-sm: 0.889rem; /* 14.2px: status line, secondary UI */
+  --font-size-base: 1rem; /* 16px: messages, composer, draft bubble */
+  --font-size-md: 1.125rem; /* 18px: guidance reason, suggested wording */
+  --font-size-lg: 1.266rem; /* 20.3px: guidance title, section headings */
+  --font-size-xl: 1.5rem; /* 24px: conversation title, press h2 */
+  --font-size-2xl: 1.8rem; /* 28.8px: press h1 on mobile */
+  --font-size-3xl: 2.16rem; /* 34.6px: press h1 */
+  /* Off the ladder on purpose: a serif at the same rem as a grotesque reads
+   * smaller, so press body sits between `base` and `md` to match its x-height. */
   --font-size-prose: 1.0625rem; /* 17px: press body, serif, long-form only */
 
   /*
    * Leading is where the rhythm lives, and it is not one ratio applied to nine
    * sizes. Small UI labels want tight leading so a two-line label reads as one
-   * object; prose wants air; a heading wants LESS air than the prose under it, so
-   * that a title which wraps still reads as a single block rather than as two
-   * lines of text that happen to be near each other.
+   * object; body copy wants air; a heading wants LESS air than the prose under
+   * it, so a title that wraps still reads as a single block.
    *
-   * So the ratios fall rather than rise as the size grows:
-   *   2xs 11/16 1.45 · xs 12/18 1.50 · sm 13/20 1.54 · base 15/24 1.60
-   *   md  16/26 1.63  (prose: the card's reason, the suggested wording)
-   *   lg  18/26 1.44  (heading: the card title, the product name)
-   *   xl  22/28 1.27  2xl 28/34 1.21  3xl 36/42 1.17
+   * So the ratios fall as the size grows:
+   *   2xs 1.43 · xs 1.42 · sm 1.48 · base 1.50 · md 1.56
+   *   lg  1.38 · xl 1.25 · 2xl 1.18 · 3xl 1.16
    */
   --line-height-2xs: 1rem;
   --line-height-xs: 1.125rem;
-  --line-height-sm: 1.25rem;
+  --line-height-sm: 1.3125rem;
   --line-height-base: 1.5rem;
-  --line-height-md: 1.625rem;
-  --line-height-lg: 1.625rem;
-  --line-height-xl: 1.75rem;
+  --line-height-md: 1.75rem;
+  --line-height-lg: 1.75rem;
+  --line-height-xl: 1.875rem;
   --line-height-2xl: 2.125rem;
-  --line-height-3xl: 2.625rem;
+  --line-height-3xl: 2.5rem;
   --line-height-prose: 1.65; /* unitless: press prose reflows at any size */
 
   /* Three weights. A fourth would be decoration; 700 in UI reads as shouting,
@@ -94,22 +130,48 @@
 
   /*
    * Tracking follows size, in the direction optical size demands: large type
-   * needs it pulled in, small type needs it opened out. Three named steps rather
-   * than a per-component judgement call.
+   * needs it pulled in, small type needs it opened out.
    *
-   * `-heading` exists because the card title is 18px, and -0.012em at that size
-   * closes the counters enough to read as cramped while doing nothing visible at
-   * 22px+. It is the difference between a heading that looks set and one that
-   * looks squeezed, which is most of what "finished" means in type.
+   * `-heading` exists because the guidance title sits near 20px, where -0.012em
+   * already closes the counters enough to read as cramped while doing nothing
+   * visible at 24px and up.
    */
-  --letter-spacing-tight: -0.012em; /* headings 22px and up only */
-  --letter-spacing-heading: -0.006em; /* 17-21px: the card title, the product name */
+  --letter-spacing-tight: -0.012em; /* headings 24px and up only */
+  --letter-spacing-heading: -0.006em; /* 18-22px: guidance title, product name */
   --letter-spacing-normal: 0;
   --letter-spacing-label: 0.04em; /* the severity chip and small caps labels */
 
-  /* ---------------------------------------------------------------------
-   * Space. 4px base, and every gap in the product is a multiple of it.
-   * ------------------------------------------------------------------- */
+  /*
+   * Numerals. Every count and every score in this product sits in a line that
+   * updates while you watch it: the download percentage, the network-request
+   * count, the match score in the provenance line. Proportional digits make
+   * those lines jitter, and a jittering number is the cheapest way to look
+   * unfinished. Consumers get this through the `numerals-tabular` utility or the
+   * `data-numeric` attribute, both defined in globals.css.
+   */
+  --numerals-ui: tabular-nums lining-nums;
+}
+
+/*
+ * Space, and this is the section that decides whether the page reads finished.
+ *
+ * The 4px grid stays: every value below is a multiple of it, plus two 2px-grid
+ * values where optics beat arithmetic (noted where they appear). What is new is
+ * the second block, the RHYTHM tokens. Uniform padding everywhere is exactly
+ * what made this page read unfinished: when the gap between a label and its
+ * value is the same as the gap between two sections, nothing groups, and a
+ * reader has to do the grouping the layout should have done.
+ *
+ * So the rhythm scale is intentionally uneven. It roughly doubles at each level
+ * of the hierarchy, because the eye reads grouping by RATIO of gaps rather than
+ * by their absolute size:
+ *   4 -> 8 -> 12 -> 20 -> 32 -> 48
+ * Within a group things are tight; between groups the gap jumps hard enough to
+ * be unmistakable. A component that reaches for `--space-*` directly is making
+ * a one-off decision; a component that reaches for `--rhythm-*` is joining a
+ * system, and the second is almost always what it wants.
+ */
+:root {
   --space-unit: 0.25rem;
   --space-1: 0.25rem; /* 4 */
   --space-2: 0.5rem; /* 8 */
@@ -117,239 +179,355 @@
   --space-4: 1rem; /* 16 */
   --space-5: 1.25rem; /* 20 */
   --space-6: 1.5rem; /* 24 */
+  --space-7: 1.75rem; /* 28 */
   --space-8: 2rem; /* 32 */
   --space-10: 2.5rem; /* 40 */
   --space-12: 3rem; /* 48 */
   --space-16: 4rem; /* 64 */
 
-  /* Sets the rules table's minimum width. NOT the prose measure: `ch` is the
-     advance of the `0` glyph rather than an average character, so 68ch
-     measured 72-84 characters per line. Prose uses 58ch, which lands 66-75. */
+  /* Inside one object: a chip and its neighbour, a label over its value. */
+  --rhythm-inline: var(--space-2); /* 8 */
+  --rhythm-stack-tight: var(--space-1); /* 4: title over its subtitle */
+  --rhythm-stack: var(--space-3); /* 12: paragraph to the block under it */
+  /* THE RHYTHM CHANGES HERE. Everything above is within-group and everything
+   * below separates groups, so the step from 12 to 20 is the largest relative
+   * jump in the scale and it is what makes a group read as a group. */
+  --rhythm-block: var(--space-5); /* 20: reason block to suggested wording */
+  --rhythm-section: var(--space-8); /* 32: thread to composer, section to section */
+  --rhythm-page: var(--space-12); /* 48: page top and bottom */
+
+  /*
+   * Padding, per surface, and they are deliberately not equal to each other.
+   *
+   * A message bubble is read as speech and wants generous horizontal padding
+   * with tight vertical: 14px/10px, both on the 2px grid rather than the 4px
+   * one, because 16/8 makes a one-line bubble look like a button and 12/12 makes
+   * it look like a table cell.
+   *
+   * The guidance surface hanging off the draft is the opposite case. It holds a
+   * title, two sentences, a quotation and two buttons, so it takes the largest
+   * padding in the product and its vertical is generous rather than tight.
+   */
+  --pad-bubble-x: 0.875rem; /* 14 */
+  --pad-bubble-y: 0.625rem; /* 10 */
+  --pad-guidance-x: var(--space-4); /* 16 */
+  --pad-guidance-y: var(--space-4); /* 16 */
+  --pad-control-x: var(--space-3); /* 12: buttons, segments */
+  --pad-control-y: var(--space-2); /* 8 */
+  --pad-composer: var(--space-3); /* 12 */
+
+  /* `--measure-app` sets the app column's width. `--measure-prose` is the rules
+     table's minimum width and NOT the prose measure: `ch` is the advance of the
+     `0` glyph rather than an average character, so 68ch measured 72-84 characters
+     per line. Prose sets 58ch itself, which lands 66-75. Neither value changed
+     in this pass, because both were measured rather than guessed. */
   --measure-app: 46rem;
   --measure-prose: 68ch;
+  /* A message bubble stops well short of the column so the thread reads as a
+   * conversation with two sides rather than as full-width paragraphs. */
+  --measure-bubble: 32rem;
 
   /*
    * Two reserved heights, both for the same reason: nothing above a control the
    * visitor is using may change size while they use it.
    *
-   * `--guidance-min-height` holds the region below the composer from first paint,
-   * so the page does not lurch when the first card arrives (ux-spec §2). It is
-   * deliberately one line rather than a whole card: reserving 200px of blank
-   * space to avoid a reflow BELOW the composer would trade a small jump for a
-   * permanent hole. The composer's own stillness comes from document order, since
-   * the guidance region is its next sibling and can only push what is under it.
+   * `--guidance-min-height` holds the region under the draft from first paint so
+   * the page does not lurch when the first guidance arrives. It is one line
+   * rather than a whole panel: reserving 200px of blank space to avoid a reflow
+   * would trade a small jump for a permanent hole.
    *
-   * `--status-min-height` is the load-state block between the composer and the
-   * send row, and this one is load-bearing: it holds the progress rule, the status
-   * line, and the booting state's second line, so the send button does not walk up
-   * the page the moment the download finishes and that second line goes away.
+   * `--status-min-height` is the load-state block, and it holds the progress
+   * rule, the status line, and the booting state's second line, so the send
+   * button does not walk up the page the moment the download finishes.
    */
   --guidance-min-height: 2.75rem;
-  /*
-   * 52px, which is the booting state measured rather than estimated: a 2px rule,
-   * 8px, a 20px line, 4px, and an 18px line. It was 48px until the browser was
-   * asked, and the 4px difference was a visible hop of the send row at the exact
-   * moment the download finished, which is the one moment the reservation exists
-   * to cover.
-   */
   --status-min-height: 3.25rem;
+  /* The typing indicator occupies a bubble-shaped space so the counterparty's
+   * reply lands where the indicator was, without a jump. Measured against a
+   * one-line bubble: 10px + 20px line + 10px. */
+  --typing-min-height: 2.5rem;
 
-  /* The progress rule under the composer while the model downloads. Same weight
-   * as the card's severity rule: the product has one line weight above hairline
-   * and this is it. */
+  /* The progress rule under the composer while the model downloads. Determinate,
+   * never a spinner parked in content. */
   --progress-height: 0.125rem;
+}
 
-  /* ---------------------------------------------------------------------
-   * Shape and line weights.
-   * ------------------------------------------------------------------- */
+/*
+ * Shape and line weights.
+ *
+ * The draft bubble and the guidance hanging off it are ONE surface, so they share
+ * `--corner-lg` on the outside and the seam between them is a hairline rather
+ * than a second radius. A radius inside a radius is how a nested card announces
+ * itself even when the fills match.
+ */
+:root {
   --corner-sm: 0.25rem;
   --corner-md: 0.375rem;
   --corner-lg: 0.5rem;
+  --corner-bubble: 0.75rem; /* speech reads rounder than furniture */
   --corner-full: 9999px; /* the severity chip and the recipient segments */
 
   --border-hairline: 1px;
-  /* One weight for every line that means severity: the card's 2px left rule and
-   * the soft underline under a flagged span. Same weight, same meaning. */
-  --border-severity: 2px;
+  /*
+   * RETIRED. This was the 2px coloured left rule on the finding card, and that
+   * treatment is banned: a coloured side stripe reads as template rather than as
+   * intent. The name is kept only so a consumer mid-flight does not break, and it
+   * now resolves to the hairline weight, because the severity border is a FULL
+   * border at 1px. Nothing new should reference it.
+   */
+  --border-severity: var(--border-hairline);
   --focus-ring-width: 2px;
   --focus-ring-offset: 2px;
+}
 
-  /* ---------------------------------------------------------------------
-   * Motion. Fast and unshowy: nothing here should be noticeable as motion,
-   * only as the absence of a jump. No bounce, no spring, no scale, no
-   * slide from an edge. A card fades in and rises 4px; that is the entire
-   * vocabulary.
-   *
-   * `--motion-rise` is a token rather than a literal because reduced motion
-   * sets it to 0 and the opacity fade continues untouched. A component that
-   * writes `translateY(var(--motion-rise))` is automatically compliant, and
-   * that is cheaper than remembering.
-   * ------------------------------------------------------------------- */
-  --duration-fast: 120ms; /* card exit on accept */
-  --duration-base: 140ms; /* card enter, the one animation that matters */
-  --duration-slow: 180ms; /* ceiling: nothing in this product is slower */
-  --easing-out: cubic-bezier(0, 0, 0.2, 1); /* decelerating, never overshoots */
-  --motion-rise: 4px;
+/*
+ * Motion.
+ *
+ * 150 to 200ms, which is the product-register band. The previous 120-180ms was
+ * slightly hot: at 120ms a reveal reads as a pop rather than as an arrival.
+ *
+ * `ease-out-quart` is the default curve and `ease-out-expo` is for the one case
+ * that needs to feel like it settles rather than stops, the guidance arriving
+ * under the draft. Plain `ease-out` is flatter than either and is kept only as
+ * the alias `--easing-out`, which now points at quart so every existing consumer
+ * gets the better curve without a rename.
+ *
+ * `--motion-rise` is a token rather than a literal because reduced motion sets it
+ * to 0 and the opacity fade continues untouched. A component that writes
+ * `translate: 0 var(--motion-rise)` is automatically compliant, which is cheaper
+ * than remembering.
+ */
+:root {
+  --duration-fast: 150ms; /* state on a control the pointer is already on */
+  --duration-base: 175ms; /* the reveal that matters: guidance, a new message */
+  --duration-slow: 200ms; /* ceiling: nothing in this product is slower */
 
-  /* One elevation, used only where a surface genuinely sits above another:
-   * the guidance card over the page. Everything else separates with a
-   * hairline. The shadow is deliberately weak enough to be deniable, since
-   * in dark schemes a shadow reads as grime rather than as height. */
-  --shadow-tint: light-dark(rgb(23 23 28 / 0.06), rgb(0 0 0 / 0.4));
+  --easing-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --easing-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --easing-out: var(--easing-out-quart);
+
+  --motion-rise: 4px; /* guidance arriving under the draft */
+  --motion-rise-message: 8px; /* a message or reply entering the thread */
+
+  /*
+   * The typing indicator's dot cycle. This is a loading state, which is one of
+   * the four things motion is allowed to convey, and it is the only loop in the
+   * product. Reduced motion holds the dots still and the indicator still says
+   * what it is in text.
+   */
+  --duration-typing: 1200ms;
+
+  /* One elevation, used only where a surface genuinely sits above another. In
+   * dark schemes a shadow reads as grime rather than as height, so the dark value
+   * is a deeper spread of a warm near-black rather than a scaled-up light one. */
+  --shadow-tint: light-dark(oklch(0.235 0.010 60 / 0.08), oklch(0.12 0.006 70 / 0.45));
   --elevation-raised: 0 1px 2px var(--shadow-tint);
 }
 
 /*
- * Colour.
+ * Colour, in OKLCH, `light-dark(<light>, <dark>)` on every line.
  *
- * Every value below is `light-dark(<light>, <dark>)`. Contrast ratios in the
- * comments are computed against the surfaces each token is actually used on,
- * in BOTH schemes, in this order: light, then dark. Text tokens are held to
- * 4.5:1 and boundaries of interactive controls to 3:1 (WCAG 1.4.11).
+ * Every ratio in the comments below was computed rather than estimated: OKLCH to
+ * linear sRGB to 8-bit sRGB to WCAG relative luminance, for every text token
+ * against every surface that token can land on, in BOTH schemes. Light first,
+ * then dark. Text is held to 4.5:1 and the boundary of anything operable to 3:1
+ * (WCAG 1.4.11). Every value is in the sRGB gamut, checked the same way: an
+ * out-of-gamut OKLCH silently clips, and a clipped warm near-white comes back as
+ * `#fffefb`, which is one rounding step away from the `#fff` this file bans.
  *
- * `--text-muted` carries the provenance line, `Matched on your device ·
- * residency-promise · 0.74`, which every accessibility review of this product
- * predicted would be the first thing to fail. It is checked here against all
- * four surfaces it can land on and clears 4.5:1 on every one, with the worst
- * case at 5.09:1 on a raised dark card.
- *
- * Those four surfaces are the whole of its licence. `--text-muted` must NOT be
- * placed on a tinted fill, because in the dark scheme it does not clear 4.5:1
- * there and this was measured rather than assumed:
- *   --text-muted on --severity-high-quiet   5.32 light · 3.92 dark   FAILS dark
- *   --text-muted on --severity-medium-quiet 5.36 light · 3.92 dark   FAILS dark
- *   --text-muted on --accent-quiet          5.24 light · 4.04 dark   FAILS dark
- *   --text-muted on --severity-high-wash    5.02 light · 4.28 dark   FAILS dark
- *   --text-muted on --severity-medium-wash  5.13 light · 4.20 dark   FAILS dark
- *   --text-muted on --severity-low-wash     5.20 light · 4.68 dark   passes
- * A chip label is `--severity-*-text`, and a washed span in the composer keeps
- * `--text-primary`; both clear comfortably (see the severity block). Nothing in
- * the product needs muted ink on a tint, so the rule is a prohibition rather
- * than a lighter muted grey that would weaken the muted/secondary distinction.
+ * THE PAIRING THAT FAILED LAST TIME: `--text-muted` on a tinted fill. It cleared
+ * 4.5:1 on the four plain surfaces and then sat at 3.9-4.3:1 on every `-quiet`
+ * and `-wash` in the dark scheme, so the system carried a written prohibition
+ * instead of a working token. This ramp fixes it at the source. `--text-muted`
+ * now clears 4.5:1 on ALL ELEVEN surfaces in BOTH schemes, worst case 4.69:1
+ * (dark, on `--severity-medium-quiet`). The prohibition is lifted: muted ink on a
+ * tint is now a legal pairing, and the cost was pulling muted and secondary
+ * closer together, which is the right trade because a rule nobody can see in the
+ * token file is a rule that gets broken.
  */
 :root {
-  /* Surfaces. Elevation is expressed as lightness plus a hairline, not shadow.
-   * Dark goes up in lightness for raised and down for sunken, which is how a
-   * quotation block inside a card reads as inset rather than as another card. */
-  --canvas: light-dark(#f7f7f8, #0d0d10);
-  --surface: light-dark(#ffffff, #15151a);
-  --surface-raised: light-dark(#ffffff, #1b1b21); /* the guidance card */
-  --surface-sunken: light-dark(#f1f1f3, #101014); /* suggested-wording quote */
+  /*
+   * Surfaces. Warm paper in light, warm near-black in dark. Elevation is
+   * lightness plus a hairline, not shadow. Dark goes UP in lightness for raised
+   * and DOWN for sunken, which is how a quotation inside the guidance reads as
+   * inset rather than as another card.
+   *
+   * Chroma sits between 0.004 and 0.009 across the whole neutral ramp: enough
+   * that a screenshot next to a cool-grey competitor looks like paper, little
+   * enough that nothing reads as tinted on its own.
+   */
+  --canvas: light-dark(oklch(0.96 0.008 75), oklch(0.18 0.008 70));
+  --surface: light-dark(oklch(0.985 0.005 80), oklch(0.222 0.008 70));
+  --surface-raised: light-dark(oklch(0.995 0.004 80), oklch(0.262 0.009 70));
+  --surface-sunken: light-dark(oklch(0.932 0.009 75), oklch(0.152 0.006 70));
 
-  /* Text. Ratios: canvas / surface.
-   *   --text-primary    16.68 / 17.86  ·  16.31 / 15.29
-   *   --text-secondary   8.86 /  9.48  ·   9.22 /  8.65
-   *   --text-muted       5.62 /  6.02  ·   5.76 /  5.40
-   * And on the two other surfaces it appears on:
-   *   --text-muted on --surface-sunken   5.34  ·  5.63
-   *   --text-muted on --surface-raised   6.02  ·  5.09  (the worst case)
-   *   --text-primary on --surface-sunken 15.83 · 15.96 */
-  --text-primary: light-dark(#17171c, #ebebee);
-  --text-secondary: light-dark(#45454e, #b2b2bb);
-  --text-muted: light-dark(#62626d, #8b8b96);
-  /* Only for text sitting on --accent-strong: 8.28 · 9.53 */
-  --text-inverse: light-dark(#fbfbfc, #0d0d10);
+  /*
+   * Text. Ratios, light · dark, in the order canvas / surface / raised / sunken:
+   *   --text-primary    14.85 / 16.02 / 16.44 / 13.68  ·  15.55 / 14.28 / 12.76 / 16.23
+   *   --text-secondary   7.90 /  8.53 /  8.75 /  7.28  ·  10.04 /  9.23 /  8.25 / 10.49
+   *   --text-muted       5.36 /  5.79 /  5.94 /  4.94  ·   7.06 /  6.48 /  5.80 /  7.37
+   *
+   * And on the seven tinted fills, which is where muted used to fail. Order:
+   * high-quiet / medium-quiet / low-quiet / accent-quiet / high-wash /
+   * medium-wash / low-wash.
+   *   --text-primary    14.43 14.51 13.57 14.14 13.42 13.56 13.08
+   *                  ·  10.44 10.33 10.50 11.04 11.28 11.09 11.28
+   *   --text-secondary   7.68  7.72  7.23  7.53  7.15  7.22  6.96
+   *                  ·   6.75  6.67  6.78  7.13  7.29  7.16  7.29
+   *   --text-muted       5.21  5.24  4.90  5.11  4.85  4.90  4.72
+   *                  ·   4.74  4.69  4.77  5.01  5.12  5.03  5.12
+   */
+  --text-primary: light-dark(oklch(0.235 0.01 60), oklch(0.935 0.006 80));
+  --text-secondary: light-dark(oklch(0.41 0.01 65), oklch(0.8 0.008 80));
+  --text-muted: light-dark(oklch(0.5 0.01 65), oklch(0.7 0.01 80));
+  /* For text on an accent fill only: on --accent 5.29 · 7.56, on --accent-strong
+   * 7.89 · 9.89. */
+  --text-inverse: light-dark(oklch(0.985 0.005 80), oklch(0.17 0.006 70));
 
-  /* Borders. Subtle and strong are decorative separators between static
-   * surfaces and are exempt from 1.4.11; they measure 1.17-1.57:1 by design,
-   * because a visible grid of lines is noise. `--border-control` is the
-   * boundary of anything a person can operate, so it clears 3:1 on every
-   * surface a control is placed on:
-   *   --border-control  3.15 canvas / 3.37 surface / 3.37 raised  ·  3.85 / 3.61 / 3.40
-   * The one surface it does not clear is --surface-sunken in light, at 2.99.
-   * That is inside the tolerance of the measurement, but rather than round it
-   * up: --surface-sunken is the suggested-wording quotation, which T3.2.5 makes
-   * a quotation and explicitly not an editable field, so no operable control
-   * sits on it. Put a control on a sunken surface and this token is wrong for
-   * it. Same caveat for --severity-low-border, which aliases this token. */
-  --border-subtle: light-dark(#e5e5e8, #26262d);
-  --border-strong: light-dark(#cfcfd5, #383840);
-  --border-control: light-dark(#8b8b95, #6e6e79);
+  /*
+   * Borders. `subtle` and `strong` separate static surfaces and are exempt from
+   * 1.4.11 by design: they measure 1.11-1.61 light · 1.18-2.13 dark, because a
+   * visible grid of lines is noise.
+   *
+   * `--border-control` is the boundary of anything a person can operate, so it
+   * clears 3:1 on EVERY surface a control can sit on, sunken included:
+   *   3.52 canvas / 3.80 surface / 3.90 raised / 3.24 sunken
+   *   4.75 canvas / 4.36 surface / 3.90 raised / 4.96 sunken
+   * The old ramp missed sunken at 2.99 and carried a written caveat about not
+   * placing a control there. That caveat is gone: the token now passes outright.
+   */
+  --border-subtle: light-dark(oklch(0.9 0.008 75), oklch(0.312 0.009 70));
+  --border-strong: light-dark(oklch(0.84 0.009 75), oklch(0.4 0.01 70));
+  --border-control: light-dark(oklch(0.6 0.009 70), oklch(0.6 0.01 70));
 }
 
 /*
- * The accent. There is one, and it is a muted blue that reads as instrument
- * rather than as alarm. It marks focus, links, and the selected recipient
- * segment. It never marks severity, so a visitor never has to wonder whether
- * blue means something is wrong.
+ * The accent: one, muted plum, `oklch(0.53 0.09 320)` in light. It marks the
+ * selected recipient segment, the focus ring, links, and the primary action, and
+ * it never marks severity, so a visitor never has to wonder whether plum means
+ * something is wrong. Lightness is retuned per scheme rather than reused, since
+ * the same plum that reads considered on paper reads muddy on near-black.
  *
- *   --accent          focus ring and control borders: 4.96 canvas / 5.31 surface  ·  7.28 / 6.83
- *   --accent-strong   links and selected labels:      8.00 / 8.56                ·  8.94 on surface
- *   --accent-quiet    the selected segment's fill. --accent-strong on it reads
- *                     7.45 · 6.69, --text-primary 15.54 · 11.45
+ *   --accent         4.91 canvas / 5.29 surface / 5.43 raised / 4.52 sunken
+ *                ·   7.44 / 6.83 / 6.11 / 7.77
+ *   --accent-strong  7.31 / 7.89 / 8.10 / 6.74  ·  9.73 / 8.94 / 7.99 / 10.16
+ *   --accent-quiet   the selected segment's fill. --accent-strong on it reads
+ *                    6.96 · 6.91, --text-primary 14.14 · 11.04, --accent 4.67 ·
+ *                    5.28, --text-muted 5.11 · 5.01.
  *
- * Two more pairings, measured for the polish pass rather than assumed:
- *
- *   --accent on --border-subtle       4.22 light · 5.64 dark   the progress rule
- *                                     on its own track, which needs 3:1 as a
- *                                     meaningful non-text indicator (1.4.11).
- *   --accent-quiet on --surface-sunken  1.02 light · 1.39 dark   FAILS 3:1.
- *
- * That second number is the reason the recipient switch's sliding indicator
- * carries a 1px `--accent` border and not only its fill. The fill alone is
- * invisible against the track it slides in, so a segmented control built from the
- * fill would convey the selected state through the label's colour and nothing
- * else. With the border it reads at --accent on --surface-sunken, 4.71 light ·
- * 7.12 dark, and the selected label still says it in --accent-strong on top.
+ * The selected segment still carries a 1px `--accent` border and not only its
+ * fill, because `--accent-quiet` against `--surface-sunken` is 1.03 light · 1.47
+ * dark, well under the 3:1 a meaningful non-text indicator needs. The fill alone
+ * would leave the selected state carried by label colour and nothing else. With
+ * the border it reads 4.52 light · 7.77 dark against the track it slides in, and
+ * the same token carries the progress rule over `--border-subtle` at 4.08 · 5.17,
+ * which is the 3:1 that rule needs as a non-text indicator.
  */
 :root {
-  --accent: light-dark(#3a63d8, #7d9bf5);
-  --accent-strong: light-dark(#23479c, #9db4f8);
-  --accent-quiet: light-dark(#ebeffb, #282d41);
+  --accent: light-dark(oklch(0.53 0.09 320), oklch(0.725 0.095 320));
+  --accent-strong: light-dark(oklch(0.44 0.1 320), oklch(0.8 0.08 320));
+  --accent-quiet: light-dark(oklch(0.945 0.02 320), oklch(0.31 0.04 320));
   --focus-ring: var(--accent);
 }
 
 /*
- * Severity. Desaturated rose for high, desaturated ochre-amber for medium, and
- * for low no hue at all, because the palette is two colours and a third would
- * start to look like a traffic light.
+ * Severity, and this is the part the redesign turns on.
  *
- * These appear in four places and nowhere else: `-text` on the chip label,
- * `-border` on the card's 2px left rule, `-quiet` as the chip's own fill, and
- * `-wash` behind a flagged span in the composer. There is no `-panel` token.
- * A soft wash is also why the composer never uses a spell-check squiggle: an
- * underline in red says you got it wrong, and nothing here has gone wrong.
+ * The vocabulary is restricted: desaturated ROSE for high, ochre AMBER for
+ * medium, and for low no hue at all. Low being neutral is what keeps the set from
+ * reading as a traffic light, and a traffic light is a compliance dashboard's
+ * idiom rather than a drafting aid's.
  *
- * Colour is never the only carrier. Every severity is also a text label, which
- * is what makes it survive forced-colours mode and colour blindness both.
+ * Five roles per severity, and each has exactly one job:
  *
- * Ratios, light · dark, measured on the surface each is used on:
- *   high-text    on --surface-raised   6.70 · 7.80      on its own chip  5.93 · 6.01
- *   medium-text  on --surface-raised   6.61 · 8.09      on its own chip  5.87 · 6.23
- *   high-border  on --surface-raised   4.79 · 4.15      (needs 3:1)
- *   medium-border on --surface-raised  3.98 · 4.49      (needs 3:1)
- *   --text-primary on any wash        14.88 · 12.12 high, 15.21 · 11.90 medium,
- *                                     15.41 · 13.27 low
- *   low-text (= --text-secondary) on its own chip  8.41 · 7.50
+ *   -text    the chip's label. Small, always accompanied by its word.
+ *   -edge    THE FULL HAIRLINE BORDER around the guidance surface, tinted toward
+ *            the severity hue at very low chroma (0.036-0.042). This replaces the
+ *            banned 2px coloured left stripe. A full border reads as the shape of
+ *            a thing; a stripe reads as a label stuck on its side. Chroma is kept
+ *            this low on purpose: the border should be recognisable as tinted only
+ *            once you look for it, which is what "noticeable in peripheral vision,
+ *            calm on inspection" means in a border.
+ *   -quiet   the chip's own fill, and nothing else.
+ *   -wash    behind a flagged span in the draft, and nothing else. A wash rather
+ *            than an underline: a red squiggle says you got it wrong, and nothing
+ *            has gone wrong.
+ *   -border  RETIRED, aliased to `-edge`. See the note at the end of this block.
+ *
+ * There is still no `-panel` token, deliberately. A filled coloured container is
+ * the single thing most likely to make this product read as a scold, and the way
+ * to keep one out of the UI is to never define it.
+ *
+ * Colour is never the only carrier. Every severity is also a word, which is what
+ * makes it survive forced-colours mode and colour blindness both.
+ *
+ * The hue drifts a few degrees warmer as lightness rises within each family (high
+ * 18 throughout; medium 72 for text, 75 for the edge, 78 for the fills). That is
+ * not sloppiness: a pale ochre at L 0.95 reads greenish at hue 72 and reads as
+ * amber at 78, while the same 78 at L 0.5 reads yellow rather than amber.
+ *
+ * Ratios, light · dark, measured on every surface each role is used on:
+ *   high-text     canvas 5.27 / surface 5.69 / raised 5.84 / sunken 4.86
+ *             ·   9.28 / 8.53 / 7.62 / 9.70      on its own chip  5.12 · 6.24
+ *   medium-text   5.30 / 5.71 / 5.86 / 4.88  ·  9.63 / 8.85 / 7.91 / 10.06
+ *                                                on its own chip  5.17 · 6.40
+ *   high-edge     1.80 canvas / 1.94 surface / 1.99 raised  ·  2.48 / 2.27 / 2.03
+ *   medium-edge   1.82 / 1.96 / 2.01  ·  2.46 / 2.26 / 2.02
+ *   low-edge      1.81 / 1.96 / 2.01  ·  2.47 / 2.27 / 2.03
+ *   low-text (= --text-secondary) on its own chip  7.23 · 6.78
+ *   --text-primary on a wash   13.42 · 11.28 high, 13.56 · 11.09 medium,
+ *                              13.08 · 11.28 low
+ *   --text-muted on a wash      4.85 · 5.12 high, 4.90 · 5.03 medium, 4.72 · 5.12 low
+ *
+ * The `-edge` tokens sit near 2:1 rather than 3:1 and that is correct: the border
+ * is not the carrier of the severity, the chip's word is, so 1.4.11 does not bite.
+ * 2:1 is still a third more contrast than `--border-strong` at 1.45, which is what
+ * makes the guidance read as a bounded object rather than as loose text.
  */
 :root {
-  --severity-high-text: light-dark(#9d3a48, #e79aa4);
-  --severity-high-border: light-dark(#b8515f, #b8646f);
-  --severity-high-quiet: light-dark(#f7eff0, #382d33);
-  --severity-high-wash: light-dark(#f5e7e9, #36252b);
+  --severity-high-text: light-dark(oklch(0.515 0.105 18), oklch(0.785 0.08 18));
+  --severity-high-edge: light-dark(oklch(0.78 0.036 18), oklch(0.45 0.042 18));
+  --severity-high-quiet: light-dark(oklch(0.953 0.016 18), oklch(0.325 0.03 18));
+  --severity-high-wash: light-dark(oklch(0.93 0.026 18), oklch(0.305 0.038 18));
 
-  --severity-medium-text: light-dark(#7d5510, #d8ab5f);
-  --severity-medium-border: light-dark(#a8761f, #a37c3a);
-  --severity-medium-quiet: light-dark(#f5f1ec, #352f2a);
-  --severity-medium-wash: light-dark(#f3ece0, #312a20);
+  --severity-medium-text: light-dark(oklch(0.505 0.085 72), oklch(0.79 0.075 75));
+  --severity-medium-edge: light-dark(oklch(0.775 0.038 75), oklch(0.445 0.04 75));
+  --severity-medium-quiet: light-dark(oklch(0.953 0.018 78), oklch(0.325 0.028 75));
+  --severity-medium-wash: light-dark(oklch(0.93 0.03 78), oklch(0.305 0.035 75));
 
-  /* Low is the neutral ramp on purpose. `Strong language · low` needs to be
-   * legible and unremarkable, not coloured. */
+  /* Low is the neutral ramp on purpose. `Strong language · Low` needs to be
+   * legible and unremarkable, not coloured. Its edge is a neutral hairline at the
+   * same lightness as the two tinted ones, so a low guidance surface is the same
+   * OBJECT as a high one and differs only in temperature. */
   --severity-low-text: var(--text-secondary);
-  --severity-low-border: var(--border-control);
-  --severity-low-quiet: light-dark(#f1f1f3, #22222a);
-  --severity-low-wash: light-dark(#eeeef0, #22222a);
+  --severity-low-edge: light-dark(oklch(0.775 0.008 75), oklch(0.445 0.01 70));
+  --severity-low-quiet: light-dark(oklch(0.93 0.007 75), oklch(0.32 0.009 70));
+  --severity-low-wash: light-dark(oklch(0.918 0.007 75), oklch(0.3 0.009 70));
+
+  /*
+   * RETIRED, kept as aliases so nothing breaks mid-flight.
+   *
+   * These three used to be the colour of the 2px left stripe, and they were darker
+   * than the values above because a 2px rule needed to hold 3:1 on its own. The
+   * stripe is banned, so they now point at `-edge`. New code uses `-edge` and says
+   * `border` rather than `border-l`.
+   */
+  --severity-high-border: var(--severity-high-edge);
+  --severity-medium-border: var(--severity-medium-edge);
+  --severity-low-border: var(--severity-low-edge);
 }
 
 /*
- * The manual toggle (T3.1.5). Setting `data-theme` on the root pins the scheme
- * with `only`, which resolves every `light-dark()` above and also fixes native
- * controls, scrollbars, and form widgets to match. One declaration per scheme,
- * so a pinned scheme cannot drift away from the automatic one.
+ * The manual toggle. Setting `data-theme` on the root pins the scheme with
+ * `only`, which resolves every `light-dark()` above and also fixes native
+ * controls, scrollbars and form widgets to match.
+ *
+ * The default is `light dark` in that order, which is the light-first decision
+ * expressed in one place: a browser with no preference gets the bright-office
+ * scheme, because that is where this work actually happens.
  *
  * Components must not use Tailwind's `dark:` variant: it reads
- * `prefers-color-scheme` directly and would disagree with a pinned theme. Every
- * colour comes from a token, in both schemes, with no variant.
+ * `prefers-color-scheme` directly and would disagree with a pinned theme.
  */
 :root {
   color-scheme: light dark;
@@ -364,12 +542,13 @@
 }
 
 /*
- * Reduced motion removes transforms and keeps opacity, per T3.1.6. Zeroing the
- * rise here means no component needs its own media query, so this cannot be
- * forgotten in one place and honoured in another.
+ * Reduced motion removes transforms and keeps opacity. Zeroing both rise tokens
+ * here means no component needs its own media query, so this cannot be honoured
+ * in one place and forgotten in another.
  */
 @media (prefers-reduced-motion: reduce) {
   :root {
     --motion-rise: 0px;
+    --motion-rise-message: 0px;
   }
 }

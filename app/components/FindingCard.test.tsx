@@ -216,33 +216,47 @@ describe("FindingCard, the decisions that must not drift", () => {
     expect(buttons[0]).toBe(buttons[1]);
   });
 
-  it("carries severity as a 2px left rule and never as a filled panel", () => {
+  /**
+   * These two tests used to assert `border-l-2` and `border-l-severity-*-border`.
+   * That treatment is BANNED now: a coloured side stripe over 1px on a card or
+   * callout is a template cliché, and `design-context/DESIGN.md` supersedes the
+   * older spec that mandated it.
+   *
+   * The lesson matters more than the edit. They pinned an implementation detail,
+   * one class name, rather than the requirement. So changing the design
+   * *correctly* broke them, while a bad design that happened to keep the class
+   * would have sailed through. Assert the requirement: severity is legible, never
+   * carried by colour alone, and never a fill.
+   *
+   * Severity now lives as a tinted FULL border on the enclosing draft surface,
+   * which is `PendingDraft`'s job. This guidance deliberately carries no border
+   * of its own, because a bordered card inside a bordered draft is exactly the
+   * nested-card ban.
+   */
+  it("never carries a severity fill, and owns no border of its own", () => {
     const markup = render(SEMANTIC);
     const root = classesOf(markup, "section")[0];
-    expect(root).toContain("border-l-2");
-    expect(root).toContain("border-l-severity-high-border");
-    // A fill on the card itself is the scold read. The chip's `-quiet` is the
-    // only severity tint on the card, and the `-wash` tokens belong to the
-    // composer's flagged span, which is the licence tokens.css gives them.
+    // A fill here is the scold read, and nothing has been sent yet.
     expect(root).not.toMatch(/bg-severity-/);
-    expect(root).toContain("bg-raised");
+    // The banned stripe, in any spelling.
+    expect(root).not.toMatch(/border-l-\d/);
+    // The draft it hangs off owns the boundary; a border here would nest.
+    expect(root).not.toMatch(/(^|\s)border(\s|$)/);
     expect(markup).not.toContain("-wash");
     expect(markup.match(/severity-\w+-quiet/g)).toHaveLength(1);
   });
 
-  // The high path above is the one a reviewer looks at, so the other two rules
-  // are where a fill could be introduced unnoticed: `medium` mapped to
-  // `bg-severity-medium-quiet` passes every other test in this file.
-  it("gives medium and low their own 2px rule, and no card a fill", () => {
+  // High is the path a reviewer looks at, so medium and low are where a fill or a
+  // stripe could reappear unnoticed.
+  it("says the severity word at every level, and never leans on colour alone", () => {
     for (const severity of ["high", "medium", "low"] as const) {
       const markup = render({ ...SEMANTIC, severity });
       const root = classesOf(markup, "section")[0];
-      expect(root, severity).toContain("border-l-2");
-      expect(root, severity).toContain(`border-l-severity-${severity}-border`);
       expect(root, severity).not.toMatch(/bg-severity-/);
+      expect(root, severity).not.toMatch(/border-l-\d/);
       expect(markup.match(/severity-\w+-quiet/g), severity).toHaveLength(1);
-      // Colour is never the only carrier: the chip says the word.
-      expect(text(markup)).toContain(severityLabel(severity));
+      // The carrier that survives forced-colours mode and colour blindness.
+      expect(text(markup), severity).toContain(severityLabel(severity));
     }
   });
 
