@@ -94,11 +94,24 @@ export type ScanResult = {
   /** True when the draft exceeded the segment cap and only its first part was checked. */
   truncated: boolean;
   /**
-   * False when the semantic rung did not run: no model, a load failure, or an
-   * inference rejection. The UI must distinguish this from a clean draft. A
-   * silent false negative is the worst possible output of a scan.
+   * False when the semantic rung did not run: no model, a load failure, an
+   * inference rejection, or a rule the matcher could not evaluate. The UI must
+   * distinguish this from a clean draft. A silent false negative is the worst
+   * possible output of a scan.
    */
   ranSemantic: boolean;
+  /**
+   * False when a rule in the deterministic rung could not be evaluated, which
+   * `ranSemantic` cannot express without lying.
+   *
+   * This exists because a user-authored term rule is the likeliest thing in the
+   * product to be malformed: a term containing regex metacharacters is caught
+   * per rule so it cannot take the scan down, but "contained" and "ran" are
+   * different claims, and reporting a clean draft for a rule that never
+   * executed is exactly the failure the rung's error handling was added to
+   * prevent.
+   */
+  ranPattern: boolean;
 };
 
 /**

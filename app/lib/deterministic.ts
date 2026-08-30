@@ -649,7 +649,17 @@ export function scanTermRules(
       if (rule.enabled === false) return [];
       const match = rule.match;
       if (match === undefined || match === null || match.kind !== "terms") return [];
-      if (!Array.isArray(match.terms)) return [];
+      /**
+       * A rule that DECLARES `kind: "terms"` but carries a non-array `terms` is
+       * malformed, not out of scope. Returning silently here was the difference
+       * between "that rule did not run" and "this draft is clean", and only the
+       * first is true. An imported or stale personal rule is the likeliest
+       * source, so throw into the guard, which reports it and lets the scan
+       * degrade honestly.
+       */
+      if (!Array.isArray(match.terms)) {
+        throw new TypeError(`terms rule ${ruleIdOf(rule)} has a non-array terms list`);
+      }
       return matchTerms(text, match.terms, match.wholeWord === true)
         .slice(0, MAX_FINDINGS_PER_RULE)
         .map((termMatch) => findingFromRule(rule, termMatch));
