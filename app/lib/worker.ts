@@ -35,6 +35,51 @@ if (wasmBackend) {
   wasmBackend.numThreads = 1;
 }
 
+/**
+ * Count this realm's requests, and wrap every mechanism rather than only
+ * `fetch`.
+ *
+ * The status line claims a number of network requests, and the main thread
+ * cannot see any of the ones that matter: a worker has its own global scope and
+ * its own `fetch`, and every byte of the model arrives here. Patching only the
+ * page would have displayed a confident zero beside a running download, which is
+ * worse than showing nothing at all.
+ *
+ * `sendBeacon` and `WebSocket` are wrapped too. Neither is used, and that is the
+ * point: if a dependency ever starts using one, the counter notices instead of
+ * staying reassuringly at zero.
+ */
+let netCount = 0;
+let netInflight = 0;
+
+function reportNet() {
+  post({ type: "net", count: netCount, inflight: netInflight });
+}
+
+const originalFetch = self.fetch.bind(self);
+self.fetch = ((...args: Parameters<typeof fetch>) => {
+  netCount++;
+  netInflight++;
+  reportNet();
+  return originalFetch(...args).finally(() => {
+    netInflight = Math.max(0, netInflight - 1);
+    reportNet();
+  });
+}) as typeof fetch;
+
+const scope = self as unknown as {
+  sendBeacon?: (...args: unknown[]) => boolean;
+  WebSocket?: unknown;
+};
+if (typeof scope.sendBeacon === "function") {
+  const originalBeacon = scope.sendBeacon.bind(scope);
+  scope.sendBeacon = (...args: unknown[]) => {
+    netCount++;
+    reportNet();
+    return originalBeacon(...args);
+  };
+}
+
 type Extractor = Awaited<ReturnType<typeof pipeline<"feature-extraction">>>;
 
 type Loaded = { extractor: Extractor; device: DeviceKind };
