@@ -1,0 +1,308 @@
+/*
+ * Design tokens. The whole visual system is here, and nothing outside this file
+ * may contain a raw colour, a raw spacing value, or a raw duration (T3.1.3
+ * acceptance). If a value a component needs is not on a scale below, the scale
+ * is wrong and this file changes.
+ *
+ * The brief this palette answers: the central moment in this product is an
+ * INTERRUPTION, and the target is noticeable in peripheral vision, calm on
+ * inspection, and never implying the visitor did something wrong. They have not
+ * made a mistake yet; nothing has been sent. So severity is carried by a chip,
+ * a hairline, and a 2px left rule at small sizes. There is no filled severity
+ * panel token in this file, deliberately: a filled coloured container is the
+ * single thing most likely to make the product read as a scold, and the way to
+ * keep one out of the UI is to never define it.
+ *
+ * Two more standing rules that follow from the same place:
+ *   - Greys carry almost all surface work. There is exactly ONE accent.
+ *   - No gradients, and one elevation token. Restraint reads as competence for
+ *     a product whose whole claim is that it sends nothing anywhere.
+ *
+ * Scheme handling: every colour token is declared once, with both values on the
+ * same line, via `light-dark()`. That is not a shortcut. It makes it structurally
+ * impossible to add a token for one scheme and forget the other, which is how
+ * dark modes become inverted afterthoughts. The manual toggle sets
+ * `color-scheme` on the root (see the [data-theme] hooks at the end).
+ *
+ * The support question was checked rather than assumed, because a colour system
+ * that resolves to nothing is worse than an ugly one. Next's minifier downlevels
+ * `light-dark()` into a custom-property toggle, so the built stylesheet contains
+ * no `light-dark()` at all and both the automatic and the pinned scheme work
+ * anywhere custom properties do. Verified by reading the emitted chunk, not by
+ * reading a compatibility table.
+ */
+
+:root {
+  /* ---------------------------------------------------------------------
+   * Type. One grotesque for UI, one genuine serif for the press page's
+   * prose, one mono for rule ids and score numerals in provenance lines.
+   *
+   * The `-hosted` indirection is the seam for self-hosted faces: whoever
+   * wires `next/font/local` sets `--typeface-ui-hosted` on the root and nothing
+   * else changes. Third-party font fetches are forbidden (T8), so until a
+   * face is vendored these resolve to system stacks, which is a fine place
+   * to be rather than a broken one.
+   * ------------------------------------------------------------------- */
+  --typeface-ui: var(--typeface-ui-hosted, ui-sans-serif, system-ui, -apple-system,
+      "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
+  --typeface-serif: var(--typeface-serif-hosted, ui-serif, Charter, "Iowan Old Style",
+      "Source Serif 4", Georgia, "Times New Roman", serif);
+  --typeface-mono: var(--typeface-mono-hosted, ui-monospace, SFMono-Regular, Menlo,
+      Consolas, "Liberation Mono", monospace);
+
+  /* Fixed scale. Sizes in rem so a visitor's own font size still governs. */
+  --font-size-2xs: 0.6875rem; /* 11px: severity chip, provenance line */
+  --font-size-xs: 0.75rem; /* 12px: timestamps, labels, badges */
+  --font-size-sm: 0.8125rem; /* 13px: status line, secondary UI */
+  --font-size-base: 0.9375rem; /* 15px: messages, composer, card body */
+  --font-size-md: 1rem; /* 16px: card `why`, suggested wording */
+  --font-size-lg: 1.125rem; /* 18px: card title, section headings */
+  --font-size-xl: 1.375rem; /* 22px: conversation title, press h2 */
+  --font-size-2xl: 1.75rem; /* 28px: press h1 on mobile */
+  --font-size-3xl: 2.25rem; /* 36px: press h1 */
+  --font-size-prose: 1.0625rem; /* 17px: press body, serif, long-form only */
+
+  --line-height-2xs: 1rem;
+  --line-height-xs: 1.125rem;
+  --line-height-sm: 1.25rem;
+  --line-height-base: 1.5rem;
+  --line-height-md: 1.5625rem;
+  --line-height-lg: 1.75rem;
+  --line-height-xl: 1.875rem;
+  --line-height-2xl: 2.25rem;
+  --line-height-3xl: 2.625rem;
+  --line-height-prose: 1.65; /* unitless: press prose reflows at any size */
+
+  /* Three weights. A fourth would be decoration; 700 in UI reads as shouting,
+   * which is the register this product spends the most effort avoiding. */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  --letter-spacing-tight: -0.012em; /* headings 22px and up only */
+  --letter-spacing-normal: 0;
+  --letter-spacing-label: 0.04em; /* the severity chip and small caps labels */
+
+  /* ---------------------------------------------------------------------
+   * Space. 4px base, and every gap in the product is a multiple of it.
+   * ------------------------------------------------------------------- */
+  --space-unit: 0.25rem;
+  --space-1: 0.25rem; /* 4 */
+  --space-2: 0.5rem; /* 8 */
+  --space-3: 0.75rem; /* 12 */
+  --space-4: 1rem; /* 16 */
+  --space-5: 1.25rem; /* 20 */
+  --space-6: 1.5rem; /* 24 */
+  --space-8: 2rem; /* 32 */
+  --space-10: 2.5rem; /* 40 */
+  --space-12: 3rem; /* 48 */
+  --space-16: 4rem; /* 64 */
+
+  /* Measures. Prose lands in the 65-75 character band T3.5.1 asks for. */
+  --measure-app: 46rem;
+  --measure-prose: 68ch;
+
+  /* The guidance region reserves this much from first paint, so a card
+   * appearing never moves the composer under a typing cursor (ux-spec §2).
+   * Empty, it holds exactly the status line. */
+  --guidance-min-height: 2.75rem;
+
+  /* ---------------------------------------------------------------------
+   * Shape and line weights.
+   * ------------------------------------------------------------------- */
+  --corner-sm: 0.25rem;
+  --corner-md: 0.375rem;
+  --corner-lg: 0.5rem;
+  --corner-full: 9999px; /* the severity chip and the recipient segments */
+
+  --border-hairline: 1px;
+  /* One weight for every line that means severity: the card's 2px left rule and
+   * the soft underline under a flagged span. Same weight, same meaning. */
+  --border-severity: 2px;
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+
+  /* ---------------------------------------------------------------------
+   * Motion. Fast and unshowy: nothing here should be noticeable as motion,
+   * only as the absence of a jump. No bounce, no spring, no scale, no
+   * slide from an edge. A card fades in and rises 4px; that is the entire
+   * vocabulary.
+   *
+   * `--motion-rise` is a token rather than a literal because reduced motion
+   * sets it to 0 and the opacity fade continues untouched. A component that
+   * writes `translateY(var(--motion-rise))` is automatically compliant, and
+   * that is cheaper than remembering.
+   * ------------------------------------------------------------------- */
+  --duration-fast: 120ms; /* card exit on accept */
+  --duration-base: 140ms; /* card enter, the one animation that matters */
+  --duration-slow: 180ms; /* ceiling: nothing in this product is slower */
+  --easing-out: cubic-bezier(0, 0, 0.2, 1); /* decelerating, never overshoots */
+  --motion-rise: 4px;
+
+  /* One elevation, used only where a surface genuinely sits above another:
+   * the guidance card over the page. Everything else separates with a
+   * hairline. The shadow is deliberately weak enough to be deniable, since
+   * in dark schemes a shadow reads as grime rather than as height. */
+  --shadow-tint: light-dark(rgb(23 23 28 / 0.06), rgb(0 0 0 / 0.4));
+  --elevation-raised: 0 1px 2px var(--shadow-tint);
+}
+
+/*
+ * Colour.
+ *
+ * Every value below is `light-dark(<light>, <dark>)`. Contrast ratios in the
+ * comments are computed against the surfaces each token is actually used on,
+ * in BOTH schemes, in this order: light, then dark. Text tokens are held to
+ * 4.5:1 and boundaries of interactive controls to 3:1 (WCAG 1.4.11).
+ *
+ * `--text-muted` carries the provenance line, `Matched on your device ·
+ * residency-promise · 0.74`, which every accessibility review of this product
+ * predicted would be the first thing to fail. It is checked here against all
+ * four surfaces it can land on and clears 4.5:1 on every one, with the worst
+ * case at 5.09:1 on a raised dark card.
+ *
+ * Those four surfaces are the whole of its licence. `--text-muted` must NOT be
+ * placed on a tinted fill, because in the dark scheme it does not clear 4.5:1
+ * there and this was measured rather than assumed:
+ *   --text-muted on --severity-high-quiet   5.32 light · 3.92 dark   FAILS dark
+ *   --text-muted on --severity-medium-quiet 5.36 light · 3.92 dark   FAILS dark
+ *   --text-muted on --accent-quiet          5.24 light · 4.04 dark   FAILS dark
+ *   --text-muted on --severity-high-wash    5.02 light · 4.28 dark   FAILS dark
+ *   --text-muted on --severity-medium-wash  5.13 light · 4.20 dark   FAILS dark
+ *   --text-muted on --severity-low-wash     5.20 light · 4.68 dark   passes
+ * A chip label is `--severity-*-text`, and a washed span in the composer keeps
+ * `--text-primary`; both clear comfortably (see the severity block). Nothing in
+ * the product needs muted ink on a tint, so the rule is a prohibition rather
+ * than a lighter muted grey that would weaken the muted/secondary distinction.
+ */
+:root {
+  /* Surfaces. Elevation is expressed as lightness plus a hairline, not shadow.
+   * Dark goes up in lightness for raised and down for sunken, which is how a
+   * quotation block inside a card reads as inset rather than as another card. */
+  --canvas: light-dark(#f7f7f8, #0d0d10);
+  --surface: light-dark(#ffffff, #15151a);
+  --surface-raised: light-dark(#ffffff, #1b1b21); /* the guidance card */
+  --surface-sunken: light-dark(#f1f1f3, #101014); /* suggested-wording quote */
+
+  /* Text. Ratios: canvas / surface.
+   *   --text-primary    16.68 / 17.86  ·  16.31 / 15.29
+   *   --text-secondary   8.86 /  9.48  ·   9.22 /  8.65
+   *   --text-muted       5.62 /  6.02  ·   5.76 /  5.40
+   * And on the two other surfaces it appears on:
+   *   --text-muted on --surface-sunken   5.34  ·  5.63
+   *   --text-muted on --surface-raised   6.02  ·  5.09  (the worst case)
+   *   --text-primary on --surface-sunken 15.83 · 15.96 */
+  --text-primary: light-dark(#17171c, #ebebee);
+  --text-secondary: light-dark(#45454e, #b2b2bb);
+  --text-muted: light-dark(#62626d, #8b8b96);
+  /* Only for text sitting on --accent-strong: 8.28 · 9.53 */
+  --text-inverse: light-dark(#fbfbfc, #0d0d10);
+
+  /* Borders. Subtle and strong are decorative separators between static
+   * surfaces and are exempt from 1.4.11; they measure 1.17-1.57:1 by design,
+   * because a visible grid of lines is noise. `--border-control` is the
+   * boundary of anything a person can operate, so it clears 3:1 on every
+   * surface a control is placed on:
+   *   --border-control  3.15 canvas / 3.37 surface / 3.37 raised  ·  3.85 / 3.61 / 3.40
+   * The one surface it does not clear is --surface-sunken in light, at 2.99.
+   * That is inside the tolerance of the measurement, but rather than round it
+   * up: --surface-sunken is the suggested-wording quotation, which T3.2.5 makes
+   * a quotation and explicitly not an editable field, so no operable control
+   * sits on it. Put a control on a sunken surface and this token is wrong for
+   * it. Same caveat for --severity-low-border, which aliases this token. */
+  --border-subtle: light-dark(#e5e5e8, #26262d);
+  --border-strong: light-dark(#cfcfd5, #383840);
+  --border-control: light-dark(#8b8b95, #6e6e79);
+}
+
+/*
+ * The accent. There is one, and it is a muted blue that reads as instrument
+ * rather than as alarm. It marks focus, links, and the selected recipient
+ * segment. It never marks severity, so a visitor never has to wonder whether
+ * blue means something is wrong.
+ *
+ *   --accent          focus ring and control borders: 4.96 canvas / 5.31 surface  ·  7.28 / 6.83
+ *   --accent-strong   links and selected labels:      8.00 / 8.56                ·  8.94 on surface
+ *   --accent-quiet    the selected segment's fill. --accent-strong on it reads
+ *                     7.45 · 6.69, --text-primary 15.54 · 11.45
+ */
+:root {
+  --accent: light-dark(#3a63d8, #7d9bf5);
+  --accent-strong: light-dark(#23479c, #9db4f8);
+  --accent-quiet: light-dark(#ebeffb, #282d41);
+  --focus-ring: var(--accent);
+}
+
+/*
+ * Severity. Desaturated rose for high, desaturated ochre-amber for medium, and
+ * for low no hue at all, because the palette is two colours and a third would
+ * start to look like a traffic light.
+ *
+ * These appear in four places and nowhere else: `-text` on the chip label,
+ * `-border` on the card's 2px left rule, `-quiet` as the chip's own fill, and
+ * `-wash` behind a flagged span in the composer. There is no `-panel` token.
+ * A soft wash is also why the composer never uses a spell-check squiggle: an
+ * underline in red says you got it wrong, and nothing here has gone wrong.
+ *
+ * Colour is never the only carrier. Every severity is also a text label, which
+ * is what makes it survive forced-colours mode and colour blindness both.
+ *
+ * Ratios, light · dark, measured on the surface each is used on:
+ *   high-text    on --surface-raised   6.70 · 7.80      on its own chip  5.93 · 6.01
+ *   medium-text  on --surface-raised   6.61 · 8.09      on its own chip  5.87 · 6.23
+ *   high-border  on --surface-raised   4.79 · 4.15      (needs 3:1)
+ *   medium-border on --surface-raised  3.98 · 4.49      (needs 3:1)
+ *   --text-primary on any wash        14.88 · 12.12 high, 15.21 · 11.90 medium,
+ *                                     15.41 · 13.27 low
+ */
+:root {
+  --severity-high-text: light-dark(#9d3a48, #e79aa4);
+  --severity-high-border: light-dark(#b8515f, #b8646f);
+  --severity-high-quiet: light-dark(#f7eff0, #382d33);
+  --severity-high-wash: light-dark(#f5e7e9, #36252b);
+
+  --severity-medium-text: light-dark(#7d5510, #d8ab5f);
+  --severity-medium-border: light-dark(#a8761f, #a37c3a);
+  --severity-medium-quiet: light-dark(#f5f1ec, #352f2a);
+  --severity-medium-wash: light-dark(#f3ece0, #312a20);
+
+  /* Low is the neutral ramp on purpose. `Strong language · low` needs to be
+   * legible and unremarkable, not coloured. */
+  --severity-low-text: var(--text-secondary);
+  --severity-low-border: var(--border-control);
+  --severity-low-quiet: light-dark(#f1f1f3, #22222a);
+  --severity-low-wash: light-dark(#eeeef0, #22222a);
+}
+
+/*
+ * The manual toggle (T3.1.5). Setting `data-theme` on the root pins the scheme
+ * with `only`, which resolves every `light-dark()` above and also fixes native
+ * controls, scrollbars, and form widgets to match. One declaration per scheme,
+ * so a pinned scheme cannot drift away from the automatic one.
+ *
+ * Components must not use Tailwind's `dark:` variant: it reads
+ * `prefers-color-scheme` directly and would disagree with a pinned theme. Every
+ * colour comes from a token, in both schemes, with no variant.
+ */
+:root {
+  color-scheme: light dark;
+}
+
+:root[data-theme="light"] {
+  color-scheme: only light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: only dark;
+}
+
+/*
+ * Reduced motion removes transforms and keeps opacity, per T3.1.6. Zeroing the
+ * rise here means no component needs its own media query, so this cannot be
+ * forgotten in one place and honoured in another.
+ */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-rise: 0px;
+  }
+}

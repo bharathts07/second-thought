@@ -1,1 +1,269 @@
 @import "tailwindcss";
+@import "./tokens.css";
+
+/*
+ * The bridge between the tokens and Tailwind's utility names, plus the small
+ * base layer the whole product inherits.
+ *
+ * `@theme inline` matters here rather than plain `@theme`: inline emits
+ * `var(--surface)` into each utility instead of copying the value, so a single
+ * `light-dark()` declaration in tokens.css keeps governing and a pinned
+ * `data-theme` keeps working. Copying values would freeze the light scheme into
+ * every class name and quietly recreate the inverted-afterthought dark mode
+ * this system exists to avoid.
+ *
+ * Tailwind's own colour palette is still reachable (`bg-red-500` and friends).
+ * It is NOT part of this design system. Severity is rose and ochre at chip and
+ * hairline scale, never a filled panel, and nothing in the product needs a hue
+ * that is not below. Reviewing for a stray `bg-red-500` is cheaper than
+ * deleting the palette and breaking a sibling module's `bg-white`.
+ */
+@theme inline {
+  /* 4px base, so `p-2` is 8px and `gap-3` is 12px. No arbitrary values. */
+  --spacing: 0.25rem;
+
+  /* The primitives in tokens.css are named `--typeface-*`, `--corner-*`,
+   * `--easing-*`, and `--letter-spacing-*` precisely so that mapping them here
+   * is not a self-reference. `--font-ui: var(--font-ui)` inside `@theme inline`
+   * would emit a circular declaration into `:root` and silently drop the font. */
+  --font-ui: var(--typeface-ui);
+  --font-sans: var(--typeface-ui);
+  --font-serif: var(--typeface-serif);
+  --font-mono: var(--typeface-mono);
+
+  --text-2xs: var(--font-size-2xs);
+  --text-2xs--line-height: var(--line-height-2xs);
+  --text-xs: var(--font-size-xs);
+  --text-xs--line-height: var(--line-height-xs);
+  --text-sm: var(--font-size-sm);
+  --text-sm--line-height: var(--line-height-sm);
+  --text-base: var(--font-size-base);
+  --text-base--line-height: var(--line-height-base);
+  --text-md: var(--font-size-md);
+  --text-md--line-height: var(--line-height-md);
+  --text-lg: var(--font-size-lg);
+  --text-lg--line-height: var(--line-height-lg);
+  --text-xl: var(--font-size-xl);
+  --text-xl--line-height: var(--line-height-xl);
+  --text-2xl: var(--font-size-2xl);
+  --text-2xl--line-height: var(--line-height-2xl);
+  --text-3xl: var(--font-size-3xl);
+  --text-3xl--line-height: var(--line-height-3xl);
+  --text-prose: var(--font-size-prose);
+  --text-prose--line-height: var(--line-height-prose);
+
+  --font-weight-regular: var(--weight-regular);
+  --font-weight-medium: var(--weight-medium);
+  --font-weight-semibold: var(--weight-semibold);
+  --tracking-tight: var(--letter-spacing-tight);
+  --tracking-label: var(--letter-spacing-label);
+
+  /* Surfaces and ink. `text-ink-muted` rather than `text-text-muted`, which is
+   * the one place a semantic token name and a readable utility name disagree. */
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-raised: var(--surface-raised);
+  --color-sunken: var(--surface-sunken);
+  --color-ink: var(--text-primary);
+  --color-ink-secondary: var(--text-secondary);
+  --color-ink-muted: var(--text-muted);
+  --color-ink-inverse: var(--text-inverse);
+
+  --color-hairline: var(--border-subtle);
+  --color-edge: var(--border-strong);
+  --color-control: var(--border-control);
+
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-quiet: var(--accent-quiet);
+
+  --color-severity-high: var(--severity-high-text);
+  --color-severity-high-border: var(--severity-high-border);
+  --color-severity-high-quiet: var(--severity-high-quiet);
+  --color-severity-high-wash: var(--severity-high-wash);
+  --color-severity-medium: var(--severity-medium-text);
+  --color-severity-medium-border: var(--severity-medium-border);
+  --color-severity-medium-quiet: var(--severity-medium-quiet);
+  --color-severity-medium-wash: var(--severity-medium-wash);
+  --color-severity-low: var(--severity-low-text);
+  --color-severity-low-border: var(--severity-low-border);
+  --color-severity-low-quiet: var(--severity-low-quiet);
+  --color-severity-low-wash: var(--severity-low-wash);
+
+  --radius-sm: var(--corner-sm);
+  --radius-md: var(--corner-md);
+  --radius-lg: var(--corner-lg);
+  --radius-full: var(--corner-full);
+
+  --shadow-raised: var(--elevation-raised);
+
+  --ease-out: var(--easing-out);
+  --animate-rise-in: rise-in var(--duration-base) var(--easing-out) both;
+  --animate-fade-out: fade-out var(--duration-fast) var(--easing-out) both;
+
+  /* `max-w-app` for the single column, `max-w-reading` for press prose. */
+  --container-app: var(--measure-app);
+  --container-reading: var(--measure-prose);
+}
+
+/*
+ * The two animations this product has. Both are declared here rather than in a
+ * component so that there is one enter and one exit, applied without exception.
+ *
+ * `rise-in` reads `--motion-rise`, which reduced motion sets to 0. The fade
+ * survives; the movement does not. That satisfies `prefers-reduced-motion`
+ * without a second keyframe set that could drift from this one.
+ */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--motion-rise));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Opacity and transform only, at the one duration. Anything that needs a
+ * different property is a decision, not a convenience, and should say why. */
+@utility transition-quiet {
+  transition-property: opacity, transform;
+  transition-duration: var(--duration-base);
+  transition-timing-function: var(--easing-out);
+}
+
+/*
+ * `--motion-rise: 0` covers the keyframes, but a transition is not a keyframe:
+ * `transition-quiet` would still animate whatever transform a component sets.
+ * Reduced motion therefore drops transform from the transition and keeps
+ * opacity, which is the letter of T3.1.6 rather than the part of it the rise
+ * token happens to cover.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .transition-quiet {
+    transition-property: opacity;
+  }
+}
+
+/*
+ * The three durations as utilities. Without these, a transition that is not
+ * `transition-quiet` has to spell a duration inline, and `duration-[140ms]` or
+ * `duration-(--duration-base)` is exactly the arbitrary value T3.1.3 rules out.
+ * Tailwind has no theme namespace for duration, so a utility is the only seam.
+ */
+@utility duration-fast {
+  transition-duration: var(--duration-fast);
+}
+
+@utility duration-base {
+  transition-duration: var(--duration-base);
+}
+
+@utility duration-slow {
+  transition-duration: var(--duration-slow);
+}
+
+/* The guidance region holds this much from first paint so that a card arriving
+ * never shifts the composer under a live cursor. */
+@utility min-h-guidance {
+  min-height: var(--guidance-min-height);
+}
+
+@layer base {
+  html {
+    font-family: var(--typeface-ui);
+    background-color: var(--canvas);
+    color: var(--text-primary);
+    /* A visitor who has scaled their text keeps their scaling. */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-base);
+    letter-spacing: var(--letter-spacing-normal);
+  }
+
+  /*
+   * Focus is always visible for keyboard users (T3.6.3). The full keyboard path
+   * is a build constraint here, not a polish pass, and an invisible ring is how
+   * that quietly stops being true. The offset keeps the ring clear of a
+   * control's own border so both stay readable.
+   *
+   * There is exactly one `outline: none` in this project, immediately below, and
+   * it is scoped to `:focus:not(:focus-visible)` so it can never suppress a
+   * keyboard ring. That is the only form the declaration may take; an
+   * `outline: none` on `:focus` or on `:focus-visible`, anywhere, is the defect
+   * T3.6.3 forbids.
+   */
+  :focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus-ring);
+    outline-offset: var(--focus-ring-offset);
+  }
+
+  /* Pointer users do not get a ring, keyboard users always do. */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  ::selection {
+    background-color: var(--accent-quiet);
+    color: var(--text-primary);
+  }
+
+  ::placeholder {
+    color: var(--text-muted);
+  }
+
+  a {
+    color: var(--accent-strong);
+    text-decoration-thickness: from-font;
+    text-underline-offset: 0.15em;
+  }
+
+  hr {
+    border-color: var(--border-subtle);
+  }
+
+  /* 600 is the heaviest weight in the system. Browsers default `strong` to 700,
+   * which shouts in a UI this quiet. */
+  strong,
+  b {
+    font-weight: var(--weight-semibold);
+  }
+}
+
+/*
+ * Forced-colours mode. Severity is always a text label as well as a colour
+ * (T3.6.1), so nothing is lost here; these overrides only stop a wash or a chip
+ * fill from turning into an unreadable block once the system takes over colour.
+ */
+@media (forced-colors: active) {
+  :root {
+    --severity-high-quiet: Canvas;
+    --severity-medium-quiet: Canvas;
+    --severity-low-quiet: Canvas;
+    --severity-high-wash: Canvas;
+    --severity-medium-wash: Canvas;
+    --severity-low-wash: Canvas;
+    --accent-quiet: Canvas;
+    --severity-high-border: CanvasText;
+    --severity-medium-border: CanvasText;
+    --severity-low-border: CanvasText;
+    --focus-ring: Highlight;
+    --shadow-tint: transparent;
+  }
+}
