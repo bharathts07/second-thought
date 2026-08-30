@@ -16,8 +16,25 @@ import { env, pipeline } from "@huggingface/transformers";
 import { MODEL_DTYPE, MODEL_ID, MODEL_REVISION } from "./model";
 import type { DeviceKind } from "./types";
 
-/** Fetch from the Hub rather than looking for a local copy. */
-env.allowLocalModels = false;
+/**
+ * Serve the model from our own origin, and refuse to fetch it from anywhere else.
+ *
+ * This is what makes `connect-src 'self'` sufficient, which in turn makes the
+ * strongest form of the privacy claim literally true rather than aspirational.
+ *
+ * It is also the only configuration that works under the CSP. Asking the Hub for
+ * weights fails: it redirects to a regional CDN host and the browser enforces
+ * `connect-src` against the redirect target, not merely the URL requested. The
+ * hostnames vary by region, so allowlisting them would be fragile as well as
+ * weaker.
+ *
+ * `allowRemoteModels = false` is the belt to that braces: if a future change
+ * removes a local file, this fails loudly instead of quietly reaching out to a
+ * third party and contradicting the claim on the page.
+ */
+env.allowLocalModels = true;
+env.allowRemoteModels = false;
+env.localModelPath = "/models/";
 
 /**
  * Point the ONNX runtime at binaries we serve ourselves.
@@ -31,7 +48,7 @@ env.allowLocalModels = false;
  */
 const wasmBackend = env.backends?.onnx?.wasm;
 if (wasmBackend) {
-  wasmBackend.wasmPaths = "/wasm/";
+  wasmBackend.wasmPaths = "/wasm/v1/";
   wasmBackend.numThreads = 1;
 }
 

@@ -16,7 +16,7 @@ import { copyFile, mkdir, readdir, stat } from "node:fs/promises";
 import { join } from "node:path";
 
 const SRC = "node_modules/onnxruntime-web/dist";
-const DEST = "public/wasm";
+const DEST = "public/wasm/v1";
 
 /**
  * Which runtime variants to serve.

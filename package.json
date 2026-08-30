@@ -10,8 +10,9 @@
     "test:watch": "vitest",
     "deploy:preview": "next build && wrangler pages deploy ./out --project-name second-thought",
     "vendor:wasm": "node scripts/vendor-wasm.mjs",
-    "prebuild": "node scripts/vendor-wasm.mjs && node scripts/build-worker.mjs",
-    "build:worker": "node scripts/build-worker.mjs"
+    "prebuild": "node scripts/vendor-wasm.mjs && node scripts/vendor-model.mjs && node scripts/build-worker.mjs",
+    "build:worker": "node scripts/build-worker.mjs",
+    "vendor:model": "node scripts/vendor-model.mjs"
   },
   "dependencies": {
     "@huggingface/transformers": "^4.2.0",

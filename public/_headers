@@ -1,5 +1,16 @@
-/wasm/*
+# Scope the wasm MIME override to .wasm ONLY.
+#
+# A blanket `/wasm/*` rule also hit the .mjs glue files the ONNX runtime imports,
+# serving JavaScript as application/wasm, so the browser refused to import them
+# as modules and the checker failed to start. That was invisible locally, because
+# a plain static server picks the type from the extension and never consults this
+# file. It only appeared once Pages applied it.
+/wasm/v1/*.wasm
   Content-Type: application/wasm
+  Cache-Control: public, max-age=31536000, immutable
+
+/wasm/v1/*.mjs
+  Content-Type: text/javascript; charset=utf-8
   Cache-Control: public, max-age=31536000, immutable
 
 /models/*
@@ -12,7 +23,7 @@
   Cache-Control: public, max-age=31536000, immutable
 
 /*
-  Content-Security-Policy: default-src 'self'; connect-src 'self' https://huggingface.co; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'self'; connect-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
   Permissions-Policy: camera=(), microphone=(), geolocation=(), usb=(), payment=()
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
