@@ -176,6 +176,24 @@ async function run(extractor: Extractor, texts: string[]): Promise<number[][]> {
   return rows;
 }
 
+/**
+ * Start loading as soon as the worker exists, rather than waiting for the first
+ * request.
+ *
+ * This line is load-bearing. Without it the handshake deadlocks: `get()` is what
+ * posts `ready`, and it used to be reachable only from `embed()`, while the page
+ * only sends an `embed` once it has seen `ready`. Each side waited for the other
+ * and the model was never fetched, so the status line sat at 0% forever with the
+ * worker script loaded and no model request in flight.
+ *
+ * Eager loading is also the behaviour the tiered load design wants: the download
+ * should begin while the visitor reads the seeded thread, not on their first
+ * keystroke.
+ */
+void get().catch((error) => {
+  post({ type: "fatal", message: String(error) });
+});
+
 self.addEventListener("message", async (event: MessageEvent) => {
   const { id, type, texts } = event.data ?? {};
   if (type !== "embed") return;

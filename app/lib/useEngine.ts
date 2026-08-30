@@ -74,14 +74,43 @@ export function useEngine(rules: readonly PolicyRule[] = COMPANY_RULES): Engine 
     startedAt.current = performance.now();
 
     /**
-     * `new URL(..., import.meta.url)` is what lets the bundler find and compile
-     * the worker as a separate entry. A plain string path would resolve at
-     * runtime against the page URL and 404 in a static export.
+     * A plain same-origin path, not a bundler-resolved URL.
+     *
+     * `new Worker(new URL("./worker.ts", import.meta.url))` looks like the
+     * canonical form and does not work here: Turbopack treats it as a static
+     * asset reference and copies the TypeScript file verbatim into
+     * `_next/static/media/`, where it is served as `video/mp2t` because that is
+     * what `.ts` means to a web server. The browser refuses to execute it and the
+     * constructor fails, which shows up as a checker stuck at 0% rather than as
+     * any recognisable error.
+     *
+     * `scripts/build-worker.mjs` bundles it to `/worker.js` instead, so this is
+     * one deterministic file the bundler never touches.
      */
-    const worker = new Worker(new URL("./worker.ts", import.meta.url), {
-      type: "module",
-    });
+    const worker = new Worker("/worker.js", { type: "module" });
     workerRef.current = worker;
+
+    /**
+     * A boot that stalls must say so.
+     *
+     * The worker can fail in ways that produce neither an error event nor
+     * progress: a blocked model host, a CSP that forbids the fetch, a runtime the
+     * browser will not instantiate. Without this the page sits at a percentage
+     * forever, which reads as a broken product and, worse, leaves a visitor
+     * believing checks are running when none are. Pattern checks genuinely do
+     * work meanwhile, so the honest message is that wording checks are the part
+     * that did not start.
+     */
+    const stall = setTimeout(() => {
+      setStatus((prev) =>
+        prev.kind === "booting"
+          ? {
+              kind: "degraded",
+              reason: "wording checks could not start, pattern checks are still running",
+            }
+          : prev,
+      );
+    }, 90_000);
 
     worker.addEventListener("message", (event: MessageEvent) => {
       const data = event.data ?? {};
@@ -102,6 +131,7 @@ export function useEngine(rules: readonly PolicyRule[] = COMPANY_RULES): Engine 
           setInflight(data.inflight ?? 0);
           break;
         case "ready":
+          clearTimeout(stall);
           setInflight(0);
           setStatus({
             kind: "ready",
@@ -122,6 +152,13 @@ export function useEngine(rules: readonly PolicyRule[] = COMPANY_RULES): Engine 
           p?.reject(new Error(String(data.message)));
           break;
         }
+        case "fatal":
+          clearTimeout(stall);
+          setStatus({
+            kind: "degraded",
+            reason: "wording checks could not start, pattern checks are still running",
+          });
+          break;
         case "notice":
           // Device demotion and similar. Not user-facing on its own; the
           // following `ready` carries the state the status line shows.
@@ -139,6 +176,7 @@ export function useEngine(rules: readonly PolicyRule[] = COMPANY_RULES): Engine 
     });
 
     return () => {
+      clearTimeout(stall);
       worker.terminate();
       workerRef.current = null;
       pending.current.clear();

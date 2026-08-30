@@ -10,7 +10,8 @@
     "test:watch": "vitest",
     "deploy:preview": "next build && wrangler pages deploy ./out --project-name second-thought",
     "vendor:wasm": "node scripts/vendor-wasm.mjs",
-    "prebuild": "node scripts/vendor-wasm.mjs"
+    "prebuild": "node scripts/vendor-wasm.mjs && node scripts/build-worker.mjs",
+    "build:worker": "node scripts/build-worker.mjs"
   },
   "dependencies": {
     "@huggingface/transformers": "^4.2.0",
@@ -23,6 +24,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "esbuild": "^0.28.2",
     "eslint": "^9",
     "eslint-config-next": "16.3.3",
     "tailwindcss": "^4",
