@@ -561,7 +561,7 @@ describe("failing safe rather than failing quiet", () => {
     });
     const result = await scanner.scan("an entirely ordinary sentence about nothing", {
       kind: "external-domain",
-      label: "acme",
+      label: "example.com",
     });
     expect(result.ranPattern).toBe(false);
   });
@@ -574,7 +574,7 @@ describe("failing safe rather than failing quiet", () => {
       });
     const result = await scanner.scan("an entirely ordinary sentence about nothing", {
       kind: "external-domain",
-      label: "acme",
+      label: "example.com",
     });
     expect(result.ranPattern).toBe(true);
   });

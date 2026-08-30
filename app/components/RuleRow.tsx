@@ -1,123 +1,79 @@
 "use client";
 
 /**
- * One rule, as a row that opens to show all of it.
+ * One rule, as a row that shows plain-language intent first.
  *
- * `plan/10` T10.3.3 is the whole brief: a tool that inspects your writing owes
- * you the ability to read every rule it applies. So the expanded state shows the
- * `why`, the cues, the exemplars or terms, the threshold, and the contexts it
- * applies in, and it shows them as data rather than as a summary. Nothing here
- * paraphrases a rule; every value is read off the `PolicyRule` it was given.
+ * Reframed for a non-technical reader. By default, a rule shows only:
+ * - Its title (what you might promise)
+ * - Why it matters (the risk)
+ * - Where it applies (in words a person uses)
+ * - An on/off control
  *
- * Three decisions worth keeping:
+ * Behind a "How this rule works" disclosure, for the curious: the example
+ * phrasings the rule is measured against, the words that must be present, and an
+ * honest statement that accuracy has not been measured yet.
  *
- *   - **The enable control is a native checkbox.** A hand-built switch would need
- *     its own focus ring, its own forced-colours fallback, and its own state
- *     semantics, and the product register bans reinventing a standard affordance
- *     for flavour. `accent-accent` is the one accent colour in the system, and
- *     `color-scheme` on the root already makes the control render correctly in
- *     both schemes. The visible tick is the state; no colour-only signal.
- *   - **The threshold renders with the word `Placeholder` beside it.** No
- *     threshold in this rule set has been calibrated, so presenting 0.60 as a
- *     tuned number would be the kind of quiet overclaim `content-safety.md` §5
- *     exists to stop. Precision reads `Not evaluated` for the same reason.
- *   - **The expanded region is not a second card.** It is spacing, a hairline,
- *     and a definition list on the row's own surface. A card inside a card is
- *     always wrong, and the sunken fill in this system belongs to quoted wording.
- *
- * Strings come from `ux-spec.md` §14 where the deck has one, and from `plan/10`
- * where it does not (the deck has no labels for a rule's own fields). Every added
- * string is checked against the §14 banned list: no violation, breach, error,
- * warning, alert, blocked, you must, risk score, offence, misconduct.
+ * The enable control is a native checkbox: product register bans reinventing a
+ * standard affordance. The expanded region is spacing, a hairline, and a
+ * definition list, not a second card. A card inside a card is always wrong.
  */
 
 import { useId, type ReactNode } from "react";
-import type { PolicyRule, RecipientKind, RuleCategory } from "@/app/lib/types";
+import type { PolicyRule, RecipientKind } from "@/app/lib/types";
 import { SeverityChip } from "./SeverityChip";
 
-/** §14 copy deck, plus the field labels the deck does not carry. */
+/** Copy deck for the reframed row. */
 const COPY = {
-  notEvaluated: "Not evaluated",
-  matchMeaning: "Match the meaning",
-  matchExact: "Match exact words",
-  removeTerm: "Remove it",
-  why: "Why it is here",
-  appliesTo: "Where it applies",
-  howItMatches: "How it matches",
-  cues: "Words that have to appear",
-  exemplars: "Examples it is measured against",
-  threshold: "Similarity threshold",
-  thresholdNote: "Placeholder. Nothing in this rule set has been calibrated yet.",
-  terms: "Words it looks for",
-  wholeWord: "Whole words only",
-  suggested: "Suggested wording",
-  noSuggested: "None. The card offers to remove the word instead.",
-  precision: "Measured precision",
-  yes: "Yes",
-  no: "No",
+  howItWorks: "How this rule works",
+  examples: "Example phrasings",
+  wordsThatMatter: "Words that must be present",
+  accuracyNote:
+    "Accuracy for this rule has not been measured yet. The check is running, but no precision figure exists.",
   /** The checkbox's accessible name. Says which rule, so the row is not needed for context. */
   enableLabel: (title: string) => `Check drafts against: ${title}`,
 } as const;
 
 /**
- * Human labels for the six categories. `disclosure` belongs to the deterministic
- * rung rather than to any rule in the shipped set, and it is listed anyway so
- * that adding such a rule cannot produce a blank cell.
+ * Plain-language descriptions of where a rule applies. Written for a
+ * non-technical reader: "messages to people outside your company" rather than
+ * "external-guest, external-domain".
  */
-const CATEGORY_LABEL: Record<RuleCategory, string> = {
-  claim: "Claim",
-  commitment: "Commitment",
-  channel: "Channel",
-  disclosure: "Disclosure",
-  tone: "Tone",
-  language: "Language",
-};
+function contextDescription(rule: PolicyRule): string {
+  const hasInternal = rule.appliesTo.includes("internal");
+  const hasExternal =
+    rule.appliesTo.includes("external-guest") || rule.appliesTo.includes("external-domain");
 
-/**
- * The demo has two recipient segments and the engine has three kinds, so these
- * are the rule's own vocabulary rather than the switch's. `Internal team` is the
- * deck's `recipient.internal`; the two external labels have no deck entry.
- */
-const CONTEXT_LABEL: Record<RecipientKind, string> = {
-  internal: "Internal team",
-  "external-guest": "External guest",
-  "external-domain": "External domain",
-};
+  if (hasInternal && hasExternal) {
+    return "All messages";
+  } else if (hasExternal) {
+    return "Messages to people outside your company";
+  } else if (hasInternal) {
+    return "Internal team messages";
+  }
+  return "No contexts";
+}
 
 /** Stable and URL-safe enough for a fragment. A personal id carries a colon. */
 export function ruleRowId(id: string): string {
   return `rule-${id}`;
 }
 
-export function categoryLabel(category: RuleCategory): string {
-  return CATEGORY_LABEL[category];
-}
-
-export function contextLabels(rule: PolicyRule): string[] {
-  return rule.appliesTo.map((kind) => CONTEXT_LABEL[kind]);
-}
-
-export function matchModeLabel(rule: PolicyRule): string {
-  return rule.match.kind === "semantic" ? COPY.matchMeaning : COPY.matchExact;
-}
-
 /**
- * One label/value pair. Stacked at 390px and two columns once there is room,
- * which keeps the label column from squeezing the values into three words a line.
+ * One label/value pair in the disclosure. Stacked at narrow widths, two columns
+ * once there is room.
  */
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="grid gap-1 sm:grid-cols-4 sm:gap-4">
       <dt className="text-xs font-medium text-ink-secondary">{label}</dt>
-      <dd className="text-sm text-ink sm:col-span-3">{children}</dd>
+      <dd className="text-sm text-ink-secondary sm:col-span-3">{children}</dd>
     </div>
   );
 }
 
 /**
- * Cues and terms are literal strings the matcher compares against, so they render
- * in the mono face this system reserves for machine-exact values. Reading them as
- * prose would invite the assumption that they are approximate.
+ * Words and phrases are literal strings the check compares against, so they
+ * render in the mono face this system reserves for machine-exact values.
  */
 function TokenList({ tokens, label }: { tokens: readonly string[]; label: string }) {
   return (
@@ -131,37 +87,6 @@ function TokenList({ tokens, label }: { tokens: readonly string[]; label: string
         </li>
       ))}
     </ul>
-  );
-}
-
-/**
- * The disclosure marker. Rotation is `motion-safe:` gated rather than relying on
- * `transition-quiet`, because Tailwind emits `rotate` as its own property and the
- * project's reduced-motion override only strips transform from that one utility.
- *
- * The DURATION carries the same gate, and it has to. `transition-property` defaults
- * to `all`, so a `duration-base` left outside the gate re-animates the rotation
- * under `prefers-reduced-motion: reduce` even though `transition-transform` is
- * correctly withheld: measured at 74deg mid-transition before this was fixed.
- */
-function Caret({ expanded }: { expanded: boolean }) {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 12 12"
-      className={`mt-1 size-3 shrink-0 text-ink-muted ease-out motion-safe:transition-transform motion-safe:duration-base ${
-        expanded ? "rotate-90" : ""
-      }`}
-    >
-      <path
-        d="M4.5 2.5 L8 6 L4.5 9.5"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   );
 }
 
@@ -188,8 +113,8 @@ export function RuleRow({
   return (
     <li id={ruleRowId(rule.id)} className="px-4 py-3 sm:px-5">
       <div className="flex items-start gap-3">
-        {/* Left of the title, so a column of ticks reads as the answer to "what is
-            switched on" without anyone having to scan across each row. */}
+        {/* Checkbox left of the title: a column of ticks reads as the answer to
+            "what is switched on" without scanning across each row. */}
         <input
           type="checkbox"
           id={checkboxId}
@@ -201,58 +126,42 @@ export function RuleRow({
           {COPY.enableLabel(rule.title)}
         </label>
 
-        {/* The whole title block is the disclosure control, which is both a bigger
-            target at 390px and the behaviour a settings list has taught everyone
-            to expect. The severity chip sits inside it, so the accessible name
-            carries the severity too. */}
-        <button
-          type="button"
-          aria-expanded={expanded}
-          /* Only while the panel exists. `aria-expanded` carries the state on its
-             own, and pointing `aria-controls` at an id that is not in the document
-             is a reference assistive technology cannot follow. */
-          aria-controls={expanded ? panelId : undefined}
-          onClick={() => onExpandedChange(rule.id, !expanded)}
-          className="min-w-0 flex-1 text-left"
-        >
-          {/* The caret sits at the far end rather than beside the checkbox: two
-              controls side by side at the start of a row read as one ambiguous
-              cluster, and the chevron is where a settings row has always put it. */}
-          <span className="flex items-start gap-2">
-            <span className="flex-1 text-base font-medium text-ink">{rule.title}</span>
+        {/* The default view: title, why, where it applies. All visible without
+            expansion. The whole block is a column, not a disclosure button. */}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start gap-2">
+            <h3 className="flex-1 text-base font-medium text-ink">{rule.title}</h3>
             <SeverityChip severity={rule.severity} />
-            <Caret expanded={expanded} />
-          </span>
-          <span className="mt-1 flex flex-wrap gap-x-2 gap-y-1 text-xs text-ink-secondary">
-            <span>{categoryLabel(rule.category)}</span>
-            <span aria-hidden="true">·</span>
-            <span>{contextLabels(rule).join(", ")}</span>
-          </span>
-        </button>
+          </div>
+          <p className="mt-1 text-sm text-ink-secondary">{rule.why}</p>
+          <p className="mt-1 text-xs text-ink-muted">{contextDescription(rule)}</p>
+
+          {/* The disclosure control sits at the end, not wrapping the whole title.
+              The visitor can read what the rule is about before deciding whether
+              to see how it works. */}
+          <button
+            type="button"
+            aria-expanded={expanded}
+            aria-controls={expanded ? panelId : undefined}
+            onClick={() => onExpandedChange(rule.id, !expanded)}
+            className="mt-2 text-sm font-medium text-accent hover:underline"
+          >
+            {COPY.howItWorks}
+          </button>
+        </div>
       </div>
 
-      {/* Conditional render with the system's one enter animation, rather than an
-          animated height. Height is a layout property and animating it here would
-          also move every row below this one while it ran. */}
+      {/* Conditional render with the system's one enter animation. */}
       {expanded ? (
-        /* `pl-7` is the checkbox plus its gap, so every value in the panel starts
-           on the same vertical as the rule title above it. */
-        <dl id={panelId} className="mt-4 flex animate-rise-in flex-col gap-3 pb-1 pl-7">
-          <Field label={COPY.why}>
-            <span className="text-ink-secondary">{rule.why}</span>
-          </Field>
-
-          <Field label={COPY.appliesTo}>{contextLabels(rule).join(" · ")}</Field>
-
-          <Field label={COPY.howItMatches}>{matchModeLabel(rule)}</Field>
-
-          {match.kind === "semantic" ? (
-            <>
-              <Field label={COPY.cues}>
-                <TokenList tokens={match.cues} label={COPY.cues} />
-              </Field>
-
-              <Field label={COPY.exemplars}>
+        <div
+          id={panelId}
+          className="mt-4 animate-rise-in border-t border-hairline pl-7 pt-4"
+        >
+          <dl className="flex flex-col gap-3">
+            {/* Example phrasings: semantic rules have exemplars, term rules show
+                the terms themselves as the examples. */}
+            <Field label={COPY.examples}>
+              {match.kind === "semantic" ? (
                 <ul className="flex flex-col gap-2">
                   {match.exemplars.map((exemplar) => (
                     <li
@@ -263,46 +172,34 @@ export function RuleRow({
                     </li>
                   ))}
                 </ul>
-              </Field>
+              ) : (
+                <ul className="flex flex-col gap-1">
+                  {match.terms.map((term) => (
+                    <li key={term} className="font-mono text-sm text-ink-secondary">
+                      {term}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Field>
 
-              <Field label={COPY.threshold}>
-                <span className="font-mono">{match.threshold.toFixed(2)}</span>
-                <span className="mt-1 block text-xs text-ink-muted">
-                  {COPY.thresholdNote}
+            {/* Words that must be present: cues for semantic, terms for exact. */}
+            <Field label={COPY.wordsThatMatter}>
+              {match.kind === "semantic" ? (
+                <TokenList tokens={match.cues} label={COPY.wordsThatMatter} />
+              ) : (
+                <span className="text-sm">
+                  Any of the words above{match.wholeWord ? ", as whole words only" : ""}.
                 </span>
-              </Field>
-            </>
-          ) : (
-            <>
-              <Field label={COPY.terms}>
-                <TokenList tokens={match.terms} label={COPY.terms} />
-              </Field>
-              <Field label={COPY.wholeWord}>
-                {match.wholeWord ? COPY.yes : COPY.no}
-              </Field>
-            </>
-          )}
+              )}
+            </Field>
 
-          <Field label={COPY.suggested}>
-            {rule.replacement ? (
-              /* A quotation on its own sunken surface, the same treatment the card
-                 gives it, so the wording reads as wording rather than as a field. */
-              <blockquote className="rounded-md border border-hairline bg-sunken px-3 py-2 text-ink">
-                {rule.replacement}
-              </blockquote>
-            ) : (
-              <span className="text-ink-secondary">
-                {COPY.noSuggested} (<span className="text-ink">{COPY.removeTerm}</span>)
-              </span>
-            )}
-          </Field>
-
-          {/* Never a number and never a blank: no precision figure has been
-              measured for any rule in this set (T10.3.3). */}
-          <Field label={COPY.precision}>
-            <span className="text-ink-secondary">{COPY.notEvaluated}</span>
-          </Field>
-        </dl>
+            {/* Accuracy note: honest and prominent. */}
+            <Field label="Accuracy">
+              <span className="text-sm">{COPY.accuracyNote}</span>
+            </Field>
+          </dl>
+        </div>
       ) : null}
     </li>
   );

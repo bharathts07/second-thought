@@ -681,6 +681,11 @@ export default function Home() {
             status={status}
             requestsSinceReady={requestsSinceReady}
             findings={shown}
+            /* The same `hasDraft` the guidance zone reads, so the send control and
+               the guidance can never disagree about whether there is a draft. It is
+               also the exact condition `handleSend` bails on, which is what makes
+               the disabled state honest rather than decorative. */
+            draftEmpty={!hasDraft}
             onInsert={handleInsert}
             onSend={handleSend}
           />

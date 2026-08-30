@@ -35,13 +35,12 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react
 import { COMPANY_RULES } from "@/app/lib/policies";
 import { RuleRow, ruleRowId } from "@/app/components/RuleRow";
 
-/** §14 copy deck, plus the section headings T10.3 names. */
+/** Copy deck for the reframed settings page. */
 const COPY = {
   backToProduct: "Second Thought",
   title: "Rules and settings",
   subtitle:
-    "Every rule the check applies, what each one looks for, and what the set " +
-    "deliberately does not look at.",
+    "The things your company would rather you did not promise, and what the check deliberately does not look at.",
 
   rulesHeading: "Rules",
   companyRules: "From your company",
@@ -67,14 +66,10 @@ const COPY = {
     "of this between visits are on the roadmap. This version shows the set as " +
     "shipped and lets you switch rules off for the session.",
 
-  modelsHeading: "On-device models",
+  modelsHeading: "What downloads",
   modelsLead:
     "Capability arrives in tiers, and the page does real work before any model " +
     "exists. Sizes are stated before anything downloads.",
-  devicePath:
-    "Whether a check runs on WebGPU or on WebAssembly is decided when the model " +
-    "loads, and the status line under the composer names which one is in use, " +
-    "along with the number of network requests since it was ready.",
   modelsRoadmap:
     "Turning the third tier on from here, and clearing what this browser has " +
     "cached, belong in this section and are not wired up yet.",
@@ -139,7 +134,7 @@ const TIERS: readonly { name: string; size: string; detail: string }[] = [
  */
 const STORAGE: readonly { what: string; where: string }[] = [
   { what: "Your preferences", where: "This browser's local storage" },
-  { what: "Rules you write", where: "This browser's database, with their vectors" },
+  { what: "Rules you write", where: "This browser's database" },
   { what: "Model files", where: "This browser's cache storage" },
 ];
 
@@ -327,8 +322,6 @@ export default function SettingsPage() {
               </li>
             ))}
           </ul>
-
-          <p className="max-w-reading text-sm text-ink-secondary">{COPY.devicePath}</p>
 
           <div className="flex flex-col gap-1">
             <Eyebrow>{COPY.roadmapHeading}</Eyebrow>

@@ -41,7 +41,7 @@
  */
 
 import Link from "next/link";
-import { useId } from "react";
+import { useId, useState } from "react";
 import type { Finding } from "@/app/lib/types";
 import { SeverityChip } from "./SeverityChip";
 
@@ -53,11 +53,17 @@ const COPY = {
   keep: "Keep mine",
   removeTerm: "Remove it",
   preparing: "Preparing a version in your words…",
-  matchedOn: "Matched on your device",
+  checkedOn: "Checked on your computer",
+  whyMatched: "Why this matched",
+  matchExplanation:
+    "This matched by meaning rather than by looking for exact words, so it also catches rewordings.",
+  rule: "Rule",
+  confidence: "Confidence",
+  confidenceNote: "Confidence is not yet calibrated, so treat it as rough.",
   pattern: "pattern",
   fromCompany: "From your company",
   fromPersonal: "Your own rules",
-  editRule: "Edit this rule",
+  seeRule: "See this rule",
 } as const;
 
 /**
@@ -100,28 +106,24 @@ export type RemediationOption = {
 };
 
 /**
- * The provenance line, split so the rule id and the score can render in the mono
- * face tokens.css reserves for exactly them, while the assembled string stays
- * available as one value to assert on.
+ * The visible provenance text before any disclosure is opened.
+ * Technical detail moved into the disclosure.
  */
-export function provenanceSegments(
-  finding: Pick<Finding, "ruleId" | "source" | "score">,
-): { prefix: string; detail: string } {
-  if (finding.source === "pattern") {
-    return { prefix: COPY.matchedOn, detail: COPY.pattern };
-  }
-  const detail =
-    typeof finding.score === "number"
-      ? `${finding.ruleId} · ${finding.score.toFixed(2)}`
-      : finding.ruleId;
-  return { prefix: COPY.matchedOn, detail };
+export function visibleProvenance(): string {
+  return COPY.checkedOn;
 }
 
-export function provenanceLine(
+/**
+ * Technical details for the disclosure. Pattern findings have no score to show.
+ */
+export function technicalDetails(
   finding: Pick<Finding, "ruleId" | "source" | "score">,
-): string {
-  const { prefix, detail } = provenanceSegments(finding);
-  return `${prefix} · ${detail}`;
+): { ruleId: string; score: number | undefined; isPattern: boolean } {
+  return {
+    ruleId: finding.ruleId,
+    score: typeof finding.score === "number" ? finding.score : undefined,
+    isPattern: finding.source === "pattern",
+  };
 }
 
 /**
@@ -221,7 +223,8 @@ export function FindingCard({
 }: FindingCardProps) {
   const titleId = useId();
   const options = remediationOptions(finding, extraOptions);
-  const { prefix, detail } = provenanceSegments(finding);
+  const [proofOpen, setProofOpen] = useState(false);
+  const details = technicalDetails(finding);
 
   return (
     <section aria-labelledby={titleId} className={CARD_BASE}>
@@ -322,27 +325,55 @@ export function FindingCard({
 
           A hairline above it, because this line is a different kind of statement
           from everything over it: the card's argument is for the visitor, and this
-          is the machine showing its working. `tabular-nums` so the score's digits
-          are the same width, which is the difference between a number that looks
-          measured and one that looks typed. */}
-      <div className="mt-4 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-t border-hairline pt-3">
-        <p className={`${LABEL_CLASS} text-ink-muted`}>
-          {prefix} · <span className="font-mono tabular-nums">{detail}</span>
-        </p>
+          is the machine showing its working. */}
+      <div className="mt-4 border-t border-hairline pt-3">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+          <p className={`${LABEL_CLASS} text-ink-muted`}>{visibleProvenance()}</p>
 
-        {/*
-          The answer to "what is a rule, and where do I see it", offered at the one
-          moment the question has a referent. An anchor rather than a button, because
-          it is navigation and because the two actions above must remain the only
-          buttons on this card: the instant a third appears, `Use this` and
-          `Keep mine` stop being the obvious pair of equals.
-        */}
-        <Link
-          href={ruleHref(finding.ruleId)}
-          className={`${LABEL_CLASS} shrink-0 rounded-sm text-ink-muted underline decoration-hairline underline-offset-2 transition-control hover:text-ink hover:decoration-control`}
-        >
-          {COPY.editRule}
-        </Link>
+          {/*
+            The answer to "what is a rule, and where do I see it", offered at the one
+            moment the question has a referent. An anchor rather than a button, because
+            it is navigation and because the two actions above must remain the only
+            buttons on this card: the instant a third appears, `Use this` and
+            `Keep mine` stop being the obvious pair of equals.
+          */}
+          <Link
+            href={ruleHref(finding.ruleId)}
+            className={`${LABEL_CLASS} shrink-0 rounded-sm text-ink-muted underline decoration-hairline underline-offset-2 transition-control hover:text-ink hover:decoration-control`}
+          >
+            {COPY.seeRule}
+          </Link>
+        </div>
+
+        {/* Technical proof disclosure. */}
+        <div className="mt-2">
+          <button
+            type="button"
+            onClick={() => setProofOpen(!proofOpen)}
+            aria-expanded={proofOpen}
+            className={`${LABEL_CLASS} rounded-sm text-ink-muted underline decoration-hairline underline-offset-2 transition-control hover:text-ink hover:decoration-control`}
+          >
+            {COPY.whyMatched}
+          </button>
+          {proofOpen ? (
+            <div className="animate-rise-in mt-2 max-w-reading space-y-2 text-xs text-ink-muted">
+              <p>{details.isPattern ? null : COPY.matchExplanation}</p>
+              <p>
+                <span className="font-medium">{COPY.rule}</span>{" "}
+                <span className="font-mono">{details.ruleId}</span>
+              </p>
+              {details.score !== undefined ? (
+                <>
+                  <p>
+                    <span className="font-medium">{COPY.confidence}</span>{" "}
+                    <span className="font-mono tabular-nums">{details.score.toFixed(2)}</span>
+                  </p>
+                  <p>{COPY.confidenceNote}</p>
+                </>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
       </div>
     </section>
   );

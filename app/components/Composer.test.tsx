@@ -47,6 +47,7 @@ import {
 } from "./GuidancePanel";
 import { PendingDraft } from "./PendingDraft";
 import { THREAD_EXTERNAL, THREAD_INTERNAL, Thread } from "./Thread";
+import { visibleProvenance } from "./FindingCard";
 
 const PROMISE_TEXT = "Yes, we guarantee your data never leaves the US.";
 
@@ -73,17 +74,15 @@ const READY: EngineStatus = { kind: "ready", device: "webgpu", demoted: false, l
 describe("statusLine", () => {
   it("reports a real percentage while booting, plus the reason for the wait", () => {
     const line = statusLine({ kind: "booting", pct: 34 }, null);
-    expect(line.text).toBe("Setting up checks on your device… 34%");
-    expect(line.detail).toContain("One-time download");
+    expect(line.text).toBe("Getting ready. This downloads once. 34%");
+    expect(line.detail).toContain("The checker runs on your computer");
   });
 
-  it("names the device and the request count once ready", () => {
-    expect(statusLine(READY, 0).text).toBe(
-      "Checks running on this device · WebGPU · 0 network requests",
-    );
-    expect(statusLine({ ...READY, device: "wasm" }, 2).text).toBe(
-      "Checks running on this device · WASM · 2 network requests",
-    );
+  it("shows plain language when ready, with technical proof in disclosure fields", () => {
+    const line = statusLine(READY, 0);
+    expect(line.text).toBe("Checking as you type. Nothing has left your computer.");
+    expect(line.device).toBe("webgpu");
+    expect(line.requestCount).toBe(0);
   });
 
   /**
@@ -93,13 +92,13 @@ describe("statusLine", () => {
    */
   it("never renders a count while the engine reports null", () => {
     const line = statusLine(READY, null);
-    expect(line.text).not.toContain("0 network requests");
-    expect(line.text).not.toMatch(/\d/);
+    expect(line.text).toBe("Downloading. Nothing you type is being sent.");
+    expect(line.kind).toBe("downloading");
   });
 
-  it("says pattern checks still run when the encoder failed", () => {
+  it("says simple checks still run when the encoder failed", () => {
     expect(statusLine({ kind: "degraded", reason: "no wasm" }, null).text).toBe(
-      "Wording checks aren't available in this browser. Pattern checks are still running.",
+      "Full checking isn't available in this browser. The simple checks are still running.",
     );
   });
 });
@@ -344,6 +343,93 @@ describe("the example replies", () => {
 });
 
 /**
+ * The actions row, measured in a browser before this pass and wrong twice.
+ *
+ * Send was filled with the accent on a fresh load and was not disabled, so the most
+ * emphasised control in the product did nothing at all until something was typed.
+ * And the three example pills carried an `aria-label` and no visible label, so a
+ * screen reader was told what they were and a sighted visitor was left guessing
+ * between filters, tags and buttons.
+ *
+ * These assertions are on the requirement rather than on the class names: the fill
+ * that marks the primary state is read out of the enabled render itself, so renaming
+ * a token moves both sides together and cannot make the test pass falsely.
+ */
+describe("the actions row", () => {
+  const row = (draftEmpty: boolean, findings: readonly Finding[] = []) =>
+    renderToStaticMarkup(
+      <Composer
+        mode="external"
+        status={READY}
+        requestsSinceReady={0}
+        findings={findings}
+        draftEmpty={draftEmpty}
+        onInsert={() => {}}
+        onSend={() => {}}
+      />,
+    );
+
+  /** Send's own opening tag, found by the reserve label only Send carries. */
+  const sendTag = (markup: string) => {
+    const opens = markup.lastIndexOf("<button", markup.indexOf("Send anyway"));
+    return markup.slice(opens, markup.indexOf(">", opens) + 1);
+  };
+  const classOf = (tag: string) => /class="([^"]*)"/.exec(tag)?.[1] ?? "";
+  const disabled = (tag: string) => /\sdisabled(=|\s|>)/.test(tag);
+  /** The one label that is not the `aria-hidden` width reserve. */
+  const words = (markup: string) => /text-center">([^<]*)</.exec(markup)?.[1];
+
+  const FILL = /bg-accent[\w-]*/.exec(classOf(sendTag(row(false))))?.[0];
+
+  it("has a fill to lose in the first place", () => {
+    expect(FILL).toBeDefined();
+  });
+
+  it("is enabled and filled once there is something to send", () => {
+    const tag = sendTag(row(false));
+    expect(disabled(tag)).toBe(false);
+    expect(classOf(tag)).toContain(FILL as string);
+  });
+
+  it("is disabled and unfilled while the draft is empty", () => {
+    const tag = sendTag(row(true));
+    expect(disabled(tag)).toBe(true);
+    expect(classOf(tag)).not.toContain(FILL as string);
+  });
+
+  /**
+   * Empty outranks the high state, and this is the case that could only be reached
+   * by the two inputs disagreeing for a frame. It still has to read `Send` rather
+   * than `Send anyway`, which on a control that cannot send would be a taunt, and
+   * the note line must not appear.
+   */
+  it("keeps the plain word and stays shut when empty meets a high finding", () => {
+    const markup = row(true, [finding({ severity: "high" })]);
+    expect(disabled(sendTag(markup))).toBe(true);
+    expect(words(markup)).toBe("Send");
+    expect(markup).not.toContain("Add a note for yourself");
+  });
+
+  /**
+   * The visible label, and the announced name resolving to it. Two names for one
+   * control is how the two drift apart, so the `aria-label` has to be gone rather
+   * than merely matching.
+   */
+  it("labels the example pills on screen and announces the same words", () => {
+    const markup = row(true);
+    expect(markup).toContain("Try one of these");
+
+    const group = /<div role="group"[^>]*>/.exec(markup)?.[0] ?? "";
+    expect(group).not.toContain("aria-label=");
+    const id = /aria-labelledby="([^"]+)"/.exec(group)?.[1];
+    expect(id).toBeDefined();
+
+    const labelled = new RegExp(`<[^>]*id="${id}"[^>]*>([^<]*)<`).exec(markup);
+    expect(labelled?.[1]).toBe("Try one of these");
+  });
+});
+
+/**
  * F27. The hint is display-only and the inserted sentence is the bare one, so the
  * `Try: "…"` wrapper can never reach the draft. If the ghost were the textarea's
  * value, the scan that fires on reaching `ready` would render a high-severity
@@ -415,6 +501,7 @@ describe("one field, one copy of the draft", () => {
         status={READY}
         requestsSinceReady={0}
         findings={[finding()]}
+        draftEmpty={false}
         onInsert={() => {}}
         onSend={() => {}}
       />,
@@ -571,6 +658,7 @@ describe("the words this product does not use", () => {
       overflowLine(2),
       GHOST_HINT,
       GHOST_INSERT,
+      visibleProvenance(),
       ...EXAMPLE_REPLIES.external.flatMap((e) => [e.label, e.text]),
       ...EXAMPLE_REPLIES.internal.flatMap((e) => [e.label, e.text]),
       renderToStaticMarkup(<Thread thread={THREAD_EXTERNAL} onReset={() => {}} />),
@@ -579,6 +667,43 @@ describe("the words this product does not use", () => {
 
     for (const value of strings) {
       for (const word of BANNED) {
+        expect(value.toLowerCase()).not.toContain(word);
+      }
+    }
+  });
+});
+
+/**
+ * Technical terminology belongs in disclosures, not in always-visible labels.
+ * This is the product's argument: readable claims in front, verifiable proof behind.
+ */
+describe("no technical jargon in always-visible labels", () => {
+  const BANNED_TECHNICAL = [
+    "webgpu",
+    "wasm",
+    "network request",
+    "model",
+    "embedding",
+    "semantic",
+    "threshold",
+    "confidence score",
+    "inference",
+    "pattern check",
+    "wording check",
+    "device",
+  ];
+
+  it("keeps technical terms out of primary status and provenance lines", () => {
+    const alwaysVisible = [
+      statusLine({ kind: "booting", pct: 7 }, null).text,
+      statusLine(READY, 0).text,
+      statusLine(READY, null).text,
+      statusLine({ kind: "degraded", reason: "x" }, null).text,
+      visibleProvenance(),
+    ];
+
+    for (const value of alwaysVisible) {
+      for (const word of BANNED_TECHNICAL) {
         expect(value.toLowerCase()).not.toContain(word);
       }
     }

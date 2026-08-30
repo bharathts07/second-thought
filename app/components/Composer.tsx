@@ -38,39 +38,62 @@ import type { EngineStatus } from "@/app/lib/useEngine";
 import type { Finding } from "@/app/lib/types";
 import type { ThreadMode } from "./Thread";
 
+const DEVICE_LABEL = { webgpu: "WebGPU", wasm: "WASM" } as const;
+
 /** §14 copy deck. Transcribed, never composed, so wording is decided once. */
 const COPY = {
-  booting: "Setting up checks on your device…",
+  booting: "Getting ready. This downloads once.",
   bootingWhy:
-    "One-time download. It is why nothing you type has to leave your machine.",
-  readyPrefix: "Checks running on this device",
-  requests: "network requests",
-  requestsSingular: "network request",
+    "The checker runs on your computer, which is why nothing you type has to leave it.",
+  ready: "Checking as you type. Nothing has left your computer.",
   degraded:
-    "Wording checks aren't available in this browser. Pattern checks are still running.",
+    "Full checking isn't available in this browser. The simple checks are still running.",
+  downloading: "Downloading. Nothing you type is being sent.",
+  howDoIKnow: "How do I know?",
+  runningOn: "Running on",
+  /**
+   * "since the checker was ready", NOT "since loading", and the distinction is the
+   * whole point of the line.
+   *
+   * The number beside this label counts from the moment the checker finished
+   * arriving. Since loading, the honest figure includes the requests that fetched the
+   * checker itself, which on a real load is 7. So the old label was describing a
+   * different measurement from the one being displayed, and it sat immediately above a
+   * sentence asserting the figure was zero. Whichever of the two a reader believed,
+   * the panel contradicted itself.
+   *
+   * A label that names a wider window than the number covers is the same failure as a
+   * wrong number, and this panel is the only evidence offered for the product's
+   * central claim.
+   */
+  requestsSince: "Requests since the checker was ready",
+  proofSentence:
+    "The checker was downloaded once. Since then this page has made no requests, so your draft cannot have been sent anywhere.",
   sendDefault: "Send",
   sendAnyway: "Send anyway",
   notePrompt: "Add a note for yourself (optional, stays on this device)",
   ghost: 'Try: "Yes, we guarantee your data never leaves the US."',
   ghostInsert: "Yes, we guarantee your data never leaves the US.",
-  /**
-   * Not in the §14 deck, which has no key for the in-flight download or for the
-   * composer's accessible name. Both are required by T4.6.2b and §10
-   * respectively. Checked against the banned list: no error, no warning, no
-   * alert, no blocked.
-   */
-  downloading: "Downloading model weights…",
   composerLabel: "Your reply",
-  examplesLabel: "Example replies",
+  /**
+   * On screen, not only in the accessibility tree. This row used to carry
+   * `Example replies` as an `aria-label` and nothing visible, so a screen reader
+   * was told what the three pills were and a sighted visitor was not: measured as
+   * three bare pills that could equally have been filters, tags, or the names of
+   * something already applied. One string now does both jobs, which is also the
+   * only way the visible and the announced name cannot drift apart.
+   */
+  examplesLabel: "Try one of these",
 } as const;
+
+/** The visible label's id, so the pill row can point its accessible name at it. */
+const EXAMPLES_LABEL_ID = "composer-examples-label";
 
 export const GHOST_HINT = COPY.ghost;
 export const GHOST_INSERT = COPY.ghostInsert;
 /** The field's accessible name. Exported so it can be asserted on, and so the
  *  name cannot drift now that the field renders inside another component. */
 export const COMPOSER_LABEL = COPY.composerLabel;
-
-const DEVICE_LABEL = { webgpu: "WebGPU", wasm: "WASM" } as const;
 
 /**
  * Which state the line describes, carried separately from the words.
@@ -95,6 +118,9 @@ export type StatusLine = {
    * percentage, so it gets no bar rather than an invented one (T3.4.2).
    */
   pct?: number;
+  /** Technical proof for the disclosure. Only present when ready. */
+  device?: "webgpu" | "wasm";
+  requestCount?: number | null;
 };
 
 /**
@@ -120,7 +146,9 @@ export function statusLine(
   }
   return {
     kind: "ready",
-    text: `${COPY.readyPrefix} · ${DEVICE_LABEL[status.device]} · ${requestsSinceReady} ${requestsSinceReady === 1 ? COPY.requestsSingular : COPY.requests}`,
+    text: COPY.ready,
+    device: status.device,
+    requestCount: requestsSinceReady,
   };
 }
 
@@ -302,6 +330,15 @@ const QUIET_BUTTON =
  * is filled-primary, which is correct: `Use this` and `Keep mine` must keep equal
  * weight to each other, and neither may become primary.
  *
+ * The same quiet class carries the EMPTY draft, and empty wins over everything
+ * else. Measured on a fresh load at 1280: the send control was filled with the
+ * accent and was not disabled, so the loudest control on the page did nothing at
+ * all. There is no third treatment for it, because a filled control that cannot
+ * act and a quiet control that cannot act are the same mistake at two volumes:
+ * the quiet class plus a real `disabled` is the honest one. The words stay `Send`,
+ * and nothing explains it, because the hint inside the field already says what to
+ * type.
+ *
  * T3.2.4 makes `Use this` and `Keep mine` equal in weight because the card is
  * advice and a primary button would turn advice into instruction. Send is not
  * advice: it is the visitor's own act, the thing they came to do, and the product
@@ -318,9 +355,13 @@ const SEND_CLASS_PRIMARY =
   "w-auto shrink-0 rounded-md border border-accent-strong bg-accent-strong px-4 py-2 " +
   "text-sm font-medium text-ink-inverse transition-control hover:border-accent hover:bg-accent";
 
+/* The disabled trio is on the quiet class rather than appended at the call site,
+   so the state set travels with the treatment: a `:disabled` button still matches
+   `:hover` in most browsers, which is why the hover has to be answered here. */
 const SEND_CLASS_QUIET =
   "w-auto shrink-0 rounded-md border border-control bg-surface px-4 py-2 " +
-  "text-sm font-medium text-ink transition-control hover:bg-sunken";
+  "text-sm font-medium text-ink transition-control hover:bg-sunken " +
+  "disabled:cursor-default disabled:text-ink-muted disabled:hover:bg-surface";
 
 /**
  * The send label reserves the width of the longer of the two words it can be, and
@@ -465,6 +506,13 @@ type ComposerProps = {
   requestsSinceReady: number | null;
   /** Already filtered to what is on screen, so the label matches the cards. */
   findings: readonly Finding[];
+  /**
+   * Whether there is anything to send. The page owns the draft, and the composer
+   * cannot see it any more now that the field renders inside the pending surface,
+   * so it has to be told. Whitespace alone counts as empty, which is what `onSend`
+   * up in the page already decides.
+   */
+  draftEmpty: boolean;
   /** A click on an example. Scans with no debounce (§6). */
   onInsert: (text: string) => void;
   onSend: (note: string) => void;
@@ -475,13 +523,18 @@ export function Composer({
   status,
   requestsSinceReady,
   findings,
+  draftEmpty,
   onInsert,
   onSend,
 }: ComposerProps) {
   const line = statusLine(status, requestsSinceReady);
-  const label = sendLabel(findings);
-  const highUnresolved = label === COPY.sendAnyway;
-  const sendClass = highUnresolved ? SEND_CLASS_QUIET : SEND_CLASS_PRIMARY;
+  /* Empty beats everything, written out rather than left to the fact that an
+     empty draft cannot hold a finding. The two states arrive from different
+     places, they can disagree for a frame, and `Send anyway` on a button that
+     cannot send is the one wording here that would read as a taunt. */
+  const label = draftEmpty ? COPY.sendDefault : sendLabel(findings);
+  const highUnresolved = !draftEmpty && label === COPY.sendAnyway;
+  const sendClass = draftEmpty || highUnresolved ? SEND_CLASS_QUIET : SEND_CLASS_PRIMARY;
 
   return (
     <div>
@@ -492,11 +545,33 @@ export function Composer({
         examples scroll sideways instead, bleeding to the edges so the row reads as
         scrollable rather than clipped, and they wrap normally once there is room.
       */}
-      <div className="flex items-start gap-3">
+      {/*
+        The row's one visible label, and it is the quietest text here on purpose.
+        Everything below it pushes the guidance up the screen, so the budget is one
+        line: `text-xs` with `mt-1` under it and no padding of its own, which is
+        about 20px in total. It sits above the whole row rather than inside the
+        scrolling pill track, so it cannot slide sideways out of view at ~390px and
+        the send control stays aligned with the pills instead of with this line.
+      */}
+      <p id={EXAMPLES_LABEL_ID} className="text-xs text-ink-muted">
+        {COPY.examplesLabel}
+      </p>
+
+      <div className="mt-1 flex items-start gap-3">
         <div
           role="group"
-          aria-label={COPY.examplesLabel}
-          className="-mx-4 flex min-w-0 flex-1 gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-x-visible sm:px-0 sm:pb-0"
+          /* Pointed at the visible words, never a second copy of them. */
+          aria-labelledby={EXAMPLES_LABEL_ID}
+          /*
+             The bleed is LEFT only. `-mx-4` bled both ways, and on the right there
+             is no screen edge to bleed to: the send control is there, 12px away,
+             so a 16px right bleed put the track's edge 4px underneath the button.
+             Measured at 390px with the row scrolled to the end, the last pill was
+             cut off exactly at the button's border with no gap, which reads as two
+             controls colliding rather than as a row that scrolls. Left bleed keeps
+             the affordance, `pr-1` keeps the clip clear of the button.
+          */
+          className="-ml-4 flex min-w-0 flex-1 gap-2 overflow-x-auto pb-1 pl-4 pr-1 sm:ml-0 sm:flex-wrap sm:overflow-x-visible sm:pb-0 sm:pl-0 sm:pr-0"
         >
           {EXAMPLE_REPLIES[mode].map((example) => (
             <button
@@ -510,7 +585,13 @@ export function Composer({
           ))}
         </div>
 
-        <SendControl label={label} revealNote={highUnresolved} sendClass={sendClass} onSend={onSend} />
+        <SendControl
+          label={label}
+          revealNote={highUnresolved}
+          sendClass={sendClass}
+          disabled={draftEmpty}
+          onSend={onSend}
+        />
       </div>
 
       {/*
@@ -537,14 +618,62 @@ export function Composer({
           key={line.kind}
           className={`animate-rise-in ${line.pct === undefined ? "" : "mt-2"}`}
         >
-          {/* `tabular-nums` so the percentage does not shuffle the words after it
-              as it climbs through 9% to 10%. */}
-          <p className="text-sm tabular-nums text-ink-secondary">{line.text}</p>
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            {/* `tabular-nums` so the percentage does not shuffle the words after it
+                as it climbs through 9% to 10%. */}
+            <p className="text-sm tabular-nums text-ink-secondary">{line.text}</p>
+            {line.kind === "ready" && line.device !== undefined && line.requestCount !== undefined ? (
+              <StatusDisclosure device={line.device} requestCount={line.requestCount} />
+            ) : null}
+          </div>
           {line.detail ? (
             <p className="mt-1 max-w-reading text-xs text-ink-muted">{line.detail}</p>
           ) : null}
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * The disclosure for technical proof. Quiet, keyboard reachable, closed by default.
+ * Uses a simple button toggle pattern rather than details/summary for predictable
+ * styling. The content appears with the same fade-and-rise as the rest of the product.
+ */
+function StatusDisclosure({
+  device,
+  requestCount,
+}: {
+  device: "webgpu" | "wasm";
+  requestCount: number | null;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="text-xs">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        className="rounded-sm text-ink-muted underline decoration-hairline underline-offset-2 transition-control hover:text-ink hover:decoration-control"
+      >
+        {COPY.howDoIKnow}
+      </button>
+      {open ? (
+        <div className="animate-rise-in mt-2 max-w-reading space-y-2 text-ink-muted">
+          <p>
+            <span className="font-medium">{COPY.runningOn}</span>{" "}
+            <span className="font-mono">{DEVICE_LABEL[device]}</span>
+          </p>
+          {requestCount !== null ? (
+            <p>
+              <span className="font-medium">{COPY.requestsSince}</span>{" "}
+              <span className="font-mono tabular-nums">{requestCount}</span>
+            </p>
+          ) : null}
+          <p>{COPY.proofSentence}</p>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -594,16 +723,24 @@ function ProgressRule({ pct }: { pct: number }) {
  * whether or not anything was typed into it. Requiring a justification to send is
  * enforcement wearing a friendly hat, so the revealed control always sends. The
  * note never leaves this component's parent, which holds it in memory.
+ *
+ * `disabled` is threaded to both branches even though only the first can be
+ * reached while it is true: `revealNote` is false whenever the draft is empty, so
+ * the note branch is unreachable there today, and a control that would send on a
+ * click is not the place to rely on that staying true.
  */
 function SendControl({
   label,
   revealNote,
   sendClass,
+  disabled,
   onSend,
 }: {
   label: string;
   revealNote: boolean;
   sendClass: string;
+  /** Nothing to send. The one state that outranks every other here. */
+  disabled: boolean;
   onSend: (note: string) => void;
 }) {
   const [noteOpen, setNoteOpen] = useState(false);
@@ -632,7 +769,7 @@ function SendControl({
             />
           </label>
         ) : null}
-        <button type="button" className={sendClass} onClick={send}>
+        <button type="button" className={sendClass} disabled={disabled} onClick={send}>
           <SendLabel label={label} />
         </button>
       </div>
@@ -640,7 +777,12 @@ function SendControl({
   }
 
   return (
-    <button type="button" className={sendClass} onClick={() => setNoteOpen(true)}>
+    <button
+      type="button"
+      className={sendClass}
+      disabled={disabled}
+      onClick={() => setNoteOpen(true)}
+    >
       <SendLabel label={label} />
     </button>
   );

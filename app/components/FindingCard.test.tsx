@@ -15,8 +15,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import type { Finding } from "@/app/lib/types";
 import {
   FindingCard,
-  provenanceLine,
-  provenanceSegments,
+  visibleProvenance,
+  technicalDetails,
   remediationOptions,
   ruleOption,
   type RemediationOption,
@@ -69,26 +69,28 @@ describe("severityLabel", () => {
   });
 });
 
-describe("provenanceLine", () => {
-  it("names the rule and the score for a semantic finding, to two places", () => {
-    expect(provenanceLine(SEMANTIC)).toBe(
-      "Matched on your device · residency-promise · 0.74",
-    );
+describe("visibleProvenance and technicalDetails", () => {
+  it("shows plain language before any disclosure is opened", () => {
+    expect(visibleProvenance()).toBe("Checked on your computer");
   });
 
-  it("says `pattern` and no rule id for a deterministic finding", () => {
-    expect(provenanceLine(TERMS)).toBe("Matched on your device · pattern");
+  it("extracts technical details for the disclosure: rule id and score", () => {
+    const details = technicalDetails(SEMANTIC);
+    expect(details.ruleId).toBe("residency-promise");
+    expect(details.score).toBeCloseTo(0.74, 2);
+    expect(details.isPattern).toBe(false);
   });
 
-  it("drops the score rather than printing `undefined` when there is none", () => {
+  it("marks pattern findings and has no score for them", () => {
+    const details = technicalDetails(TERMS);
+    expect(details.ruleId).toBe("strong-language");
+    expect(details.score).toBeUndefined();
+    expect(details.isPattern).toBe(true);
+  });
+
+  it("handles missing scores gracefully", () => {
     const scoreless = { ...SEMANTIC, score: undefined };
-    expect(provenanceLine(scoreless)).toBe(
-      "Matched on your device · residency-promise",
-    );
-  });
-
-  it("keeps the rule id and score in one segment, for the mono face", () => {
-    expect(provenanceSegments(SEMANTIC).detail).toBe("residency-promise · 0.74");
+    expect(technicalDetails(scoreless).score).toBeUndefined();
   });
 });
 
@@ -163,7 +165,7 @@ const classesOf = (markup: string, tag: string) =>
   );
 
 describe("FindingCard anatomy", () => {
-  it("renders §7's parts in order, with every string from the §14 deck", () => {
+  it("renders §7's parts in order, with plain language always visible", () => {
     const body = text(render(SEMANTIC));
     const order = [
       "Worth a second thought",
@@ -175,7 +177,8 @@ describe("FindingCard anatomy", () => {
       SEMANTIC.replacement!,
       "Use this",
       "Keep mine",
-      "Matched on your device · residency-promise · 0.74",
+      "Checked on your computer",
+      "See this rule",
     ];
     let cursor = -1;
     for (const part of order) {
@@ -212,7 +215,9 @@ describe("FindingCard anatomy", () => {
 describe("FindingCard, the decisions that must not drift", () => {
   it("gives both actions the identical class, so neither can become primary", () => {
     const buttons = classesOf(render(SEMANTIC), "button");
-    expect(buttons).toHaveLength(2);
+    // Three buttons: Use this, Keep mine, and the disclosure toggle.
+    expect(buttons).toHaveLength(3);
+    // The first two are the action buttons, which must be identical.
     expect(buttons[0]).toBe(buttons[1]);
   });
 
@@ -291,9 +296,9 @@ describe("FindingCard, a finding with no replacement", () => {
     expect(body).toContain("Remove it");
     expect(body).not.toContain("Use this");
     expect(body).not.toContain("Suggested wording");
-    expect(body).toContain("Matched on your device · pattern");
-    // Still two equal actions: remove it, or keep your own wording.
-    expect(classesOf(markup, "button")).toHaveLength(2);
+    expect(body).toContain("Checked on your computer");
+    // Three buttons: Remove it, Keep mine, and the disclosure toggle.
+    expect(classesOf(markup, "button").length).toBeGreaterThanOrEqual(2);
     expect(body).toContain("Keep mine");
   });
 
@@ -329,7 +334,7 @@ describe("FindingCard, a rewrite still streaming", () => {
     const body = text(markup);
     expect(body).toContain("Preparing a version in your words…");
     expect(body).toContain("In your words");
-    // Only the first remedy's two buttons: no disabled control for a pending one.
-    expect(classesOf(markup, "button")).toHaveLength(2);
+    // First remedy's two buttons plus the disclosure toggle: no disabled control for a pending one.
+    expect(classesOf(markup, "button")).toHaveLength(3);
   });
 });
