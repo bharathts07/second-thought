@@ -295,15 +295,18 @@ const QUIET_BUTTON =
   "shrink-0 whitespace-nowrap rounded-full border border-hairline bg-surface px-3 py-2 text-xs text-ink-secondary transition-control hover:bg-sunken hover:text-ink";
 
 /**
- * Send is the one filled control in the product, and that is a considered
- * exception rather than a drift.
+ * Send is the one filled control in the product when the draft is clean or has only
+ * medium/low findings. When an unresolved HIGH finding exists, `Send anyway` becomes
+ * quiet (bordered, surface background, no accent fill), because the loudest thing on
+ * screen should be the thing the visitor should probably do. In that state, nothing
+ * is filled-primary, which is correct: `Use this` and `Keep mine` must keep equal
+ * weight to each other, and neither may become primary.
  *
  * T3.2.4 makes `Use this` and `Keep mine` equal in weight because the card is
  * advice and a primary button would turn advice into instruction. Send is not
  * advice: it is the visitor's own act, the thing they came to do, and the product
- * never stands in front of it (§8.5). A surface where the only filled element is
- * the visitor's own action says exactly that, and it also gives the composer the
- * focal point it needs to look finished rather than provisional.
+ * never stands in front of it (§8.5). But when a high finding exists, the visual
+ * hierarchy inverts: bypass becomes quiet, and the guidance actions stay equal.
  *
  * Ratios, light · dark: --text-inverse on --accent-strong 8.28 · 9.53 at rest, on
  * --accent 5.13 · 7.28 on hover, and the button's edge against the canvas reads
@@ -311,9 +314,13 @@ const QUIET_BUTTON =
  * below --accent-strong and inventing one for a hover state would be a worse trade
  * than moving up the ramp.
  */
-const SEND_CLASS =
+const SEND_CLASS_PRIMARY =
   "w-auto shrink-0 rounded-md border border-accent-strong bg-accent-strong px-4 py-2 " +
   "text-sm font-medium text-ink-inverse transition-control hover:border-accent hover:bg-accent";
+
+const SEND_CLASS_QUIET =
+  "w-auto shrink-0 rounded-md border border-control bg-surface px-4 py-2 " +
+  "text-sm font-medium text-ink transition-control hover:bg-sunken";
 
 /**
  * The send label reserves the width of the longer of the two words it can be, and
@@ -474,6 +481,7 @@ export function Composer({
   const line = statusLine(status, requestsSinceReady);
   const label = sendLabel(findings);
   const highUnresolved = label === COPY.sendAnyway;
+  const sendClass = highUnresolved ? SEND_CLASS_QUIET : SEND_CLASS_PRIMARY;
 
   return (
     <div>
@@ -502,7 +510,7 @@ export function Composer({
           ))}
         </div>
 
-        <SendControl label={label} revealNote={highUnresolved} onSend={onSend} />
+        <SendControl label={label} revealNote={highUnresolved} sendClass={sendClass} onSend={onSend} />
       </div>
 
       {/*
@@ -590,10 +598,12 @@ function ProgressRule({ pct }: { pct: number }) {
 function SendControl({
   label,
   revealNote,
+  sendClass,
   onSend,
 }: {
   label: string;
   revealNote: boolean;
+  sendClass: string;
   onSend: (note: string) => void;
 }) {
   const [noteOpen, setNoteOpen] = useState(false);
@@ -622,7 +632,7 @@ function SendControl({
             />
           </label>
         ) : null}
-        <button type="button" className={SEND_CLASS} onClick={send}>
+        <button type="button" className={sendClass} onClick={send}>
           <SendLabel label={label} />
         </button>
       </div>
@@ -630,7 +640,7 @@ function SendControl({
   }
 
   return (
-    <button type="button" className={SEND_CLASS} onClick={() => setNoteOpen(true)}>
+    <button type="button" className={sendClass} onClick={() => setNoteOpen(true)}>
       <SendLabel label={label} />
     </button>
   );

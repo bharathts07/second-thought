@@ -312,7 +312,8 @@ export default function Home() {
 
   /**
    * What gets scrolled into view is the END OF THE PENDING SURFACE, not the end of
-   * the document.
+   * the document, but KEEP THE LAST INBOUND MESSAGE VISIBLE whenever the two fit
+   * together.
    *
    * The two used to be the same thing, because the composer was pinned over the
    * bottom of the viewport and nothing came after it. Now the example replies, the
@@ -321,6 +322,11 @@ export default function Home() {
    * the top of a short viewport to make room for the disclaimer. So the target is
    * the surface's own bottom edge, plus a margin so the buttons are not flush with
    * the screen edge.
+   *
+   * The message being answered is the reason the draft exists, so losing it costs
+   * the demo its meaning. When both the last inbound message and the pending surface
+   * fit in the viewport together, keep both visible. Only scroll past the message
+   * when they genuinely do not fit, prioritising the accept and reject buttons.
    *
    * It never scrolls UP: `Math.max(window.scrollY, ...)`. Deleting a few characters
    * shrinks the surface, and following that upward would drag the page away from
@@ -331,11 +337,39 @@ export default function Home() {
     const doc = document.documentElement;
     const node = pendingRef.current;
     const maxScroll = Math.max(0, doc.scrollHeight - window.innerHeight);
-    const target = node
-      ? window.scrollY + node.getBoundingClientRect().bottom - window.innerHeight + FOLLOW_MARGIN_PX
-      : doc.scrollHeight;
+
+    if (!node) {
+      window.scrollTo({ top: Math.min(maxScroll, Math.max(window.scrollY, doc.scrollHeight)) });
+      return;
+    }
+
+    const lastInbound = thread.messages
+      .slice()
+      .reverse()
+      .find((msg) => !msg.mine);
+
+    if (lastInbound) {
+      const lastInboundElement = document.getElementById(lastInbound.id);
+      if (lastInboundElement) {
+        const inboundRect = lastInboundElement.getBoundingClientRect();
+        const pendingRect = node.getBoundingClientRect();
+
+        const inboundTop = window.scrollY + inboundRect.top;
+        const pendingBottom = window.scrollY + pendingRect.bottom + FOLLOW_MARGIN_PX;
+
+        const totalHeight = pendingBottom - inboundTop;
+
+        if (totalHeight <= window.innerHeight) {
+          const target = inboundTop;
+          window.scrollTo({ top: Math.min(maxScroll, Math.max(window.scrollY, target)) });
+          return;
+        }
+      }
+    }
+
+    const target = window.scrollY + node.getBoundingClientRect().bottom - window.innerHeight + FOLLOW_MARGIN_PX;
     window.scrollTo({ top: Math.min(maxScroll, Math.max(window.scrollY, target)) });
-  }, [draft, hasGuidance, shown.length, thread.messages.length, typingIn]);
+  }, [draft, hasGuidance, shown.length, thread.messages.length, typingIn, thread.messages]);
 
   const handleSwitch = useCallback(
     (next: ThreadMode) => {
@@ -673,8 +707,9 @@ export default function Home() {
 
       {/* Page-level small print, last on the page. It belonged to the pinned bar
           while there was one; with the bar gone it is a footer, which is what it
-          always read as. */}
-      <p className="mt-8 max-w-reading pb-8 text-2xs text-ink-muted">{COPY.disclaimer}</p>
+          always read as. The gap above it is removed so the page ends where the
+          content ends. */}
+      <p className="mt-4 max-w-reading pb-8 text-2xs text-ink-muted">{COPY.disclaimer}</p>
     </div>
   );
 }

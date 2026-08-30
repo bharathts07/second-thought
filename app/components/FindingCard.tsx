@@ -237,15 +237,15 @@ export function FindingCard({
 
       {/*
         Title first, reason second, wording third, actions last (T3.2.3), and the
-        spacing is what makes that an order rather than a sequence: 4px between the
-        title and its reason, which belong together, then 16px and 24px as the card
-        moves to a different kind of content. Even spacing would render the same
-        five elements with no hierarchy at all.
+        spacing is what makes that an order rather than a sequence. Tightened from
+        the previous 4-16-24 progression to reduce the guidance surface height while
+        preserving hierarchy: 3-12-16 keeps the relationships clear at a smaller
+        overall scale.
 
         `tracking-heading` is -0.006em, for 18px. The 22px `tracking-tight` this
         used is enough to look squeezed at this size.
       */}
-      <h3 id={titleId} className="mt-4 text-lg font-semibold tracking-heading text-ink">
+      <h3 id={titleId} className="mt-3 text-lg font-semibold tracking-heading text-ink">
         {finding.title}
       </h3>
 
@@ -257,11 +257,11 @@ export function FindingCard({
           severity `-wash` for the flagged span in the composer and nowhere else,
           and the filled surface in this card belongs to the SUGGESTION, which
           T3.2.3 wants visually distinct from the visitor's own sentence. */}
-      <blockquote className="mt-4 max-w-reading border-l border-l-hairline pl-4 text-base text-ink-secondary">
+      <blockquote className="mt-3 max-w-reading border-l border-l-hairline pl-4 text-base text-ink-secondary">
         &ldquo;{finding.matchedText}&rdquo;
       </blockquote>
 
-      <ul className="mt-6 flex flex-col gap-6">
+      <ul className="mt-4 flex flex-col gap-4">
         {options.map((option, index) => (
           <li key={option.id}>
             {option.heading ? (
@@ -286,11 +286,11 @@ export function FindingCard({
             ) : null}
 
             {option.provenance ? (
-              <p className={`mt-2 ${LABEL_CLASS} text-ink-muted`}>{option.provenance}</p>
+              <p className={`mt-1 ${LABEL_CLASS} text-ink-muted`}>{option.provenance}</p>
             ) : null}
 
             {option.pending ? null : (
-              <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:justify-end">
                 <button
                   type="button"
                   className={ACTION_CLASS}
@@ -325,7 +325,7 @@ export function FindingCard({
           is the machine showing its working. `tabular-nums` so the score's digits
           are the same width, which is the difference between a number that looks
           measured and one that looks typed. */}
-      <div className="mt-6 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-t border-hairline pt-4">
+      <div className="mt-4 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-t border-hairline pt-3">
         <p className={`${LABEL_CLASS} text-ink-muted`}>
           {prefix} · <span className="font-mono tabular-nums">{detail}</span>
         </p>
