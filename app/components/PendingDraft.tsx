@@ -7,18 +7,28 @@
  * relationship is structural: the draft renders as a message at the end of the
  * thread, and the guidance is the lower half of the same object.
  *
+ * **The bubble IS the input.** The field itself is rendered into the `field` slot,
+ * where the draft's body used to be a paragraph. It was a paragraph here AND a
+ * textarea in a box below, so the visitor's own sentence appeared twice on screen,
+ * which reads as a bug and undoes the point of showing the draft as a message at
+ * all. One surface, top to bottom: who it is from and that it has not been sent,
+ * then what you are typing, then what there is to say about it, then the actions.
+ *
  * **One surface, not a card inside a card.** One border, one background, one
  * elevation, and a hairline seam between the two zones. The alternative, a
  * bordered guidance card sitting inside a bordered draft card, is banned outright,
- * and it is also the thing that made the old layout read as unfinished.
+ * and it is also the thing that made the old layout read as unfinished. The field
+ * follows the same rule: it brings no box of its own, and the focus ring belongs to
+ * this surface rather than to a rectangle inside it, because this surface is the
+ * field.
  *
  * **It must be obvious this has not been sent**, because that distinction is the
  * difference between advice and a record, and the whole product rests on arriving
  * before the record exists. Three things carry it: the label sits in the slot where
  * every sent message shows a timestamp and says so in words, the surface is lifted
- * and outlined where a sent message is plain text on the thread, and it vanishes
- * the instant Send is pressed, reappearing above as an ordinary message with a
- * time.
+ * and outlined where a sent message is plain text on the thread, and the text
+ * leaves it the instant Send is pressed, reappearing above as an ordinary message
+ * with a time.
  *
  * **Severity is a full hairline border, tinted.** Not a coloured side stripe, which
  * is banned, and not a filled panel, which reads as a scold when the visitor has
@@ -69,8 +79,28 @@ const SEAM_EDGE: Record<Severity, string> = {
   low: "border-t-severity-low-edge",
 };
 
+/**
+ * The focus treatment, on the surface rather than on the control inside it.
+ *
+ * `:has(textarea:focus-visible)` and not `focus-within`: the surface also holds the
+ * accept and reject buttons, and `focus-within` would light the whole bubble up
+ * whenever one of those took focus, on top of that button's own ring. The width and
+ * the offset are the same 2px the global `:focus-visible` rule uses, so a keyboard
+ * visitor sees one ring in one style everywhere in the product.
+ *
+ * A textarea matches `:focus-visible` on a pointer click as well as on Tab, which is
+ * what makes this the field's real focus state and not a keyboard-only nicety.
+ */
+const SURFACE_FOCUS =
+  "has-[textarea:focus-visible]:outline-2 has-[textarea:focus-visible]:outline-offset-2 has-[textarea:focus-visible]:outline-accent";
+
 type PendingDraftProps = {
-  draft: string;
+  /**
+   * The field. A slot rather than a `draft` string, because there is now exactly
+   * one copy of the draft on screen and it lives inside a control this component
+   * has no business owning.
+   */
+  field: React.ReactNode;
   /**
    * The highest severity on screen, or undefined when there is no guidance. It
    * decides the tint of the surrounding border and nothing else: the severity WORD
@@ -89,7 +119,7 @@ type PendingDraftProps = {
 };
 
 export function PendingDraft({
-  draft,
+  field,
   severity,
   hasGuidance,
   children,
@@ -99,7 +129,7 @@ export function PendingDraft({
 
   return (
     <div
-      className={`animate-rise-in mt-6 overflow-hidden rounded-lg border bg-raised shadow-raised transition-control ${edge}`}
+      className={`animate-rise-in mt-6 overflow-hidden rounded-lg border bg-raised shadow-raised transition-control ${edge} ${SURFACE_FOCUS}`}
     >
       {/*
         The same meta-then-body shape as a message in the thread above, at the same
@@ -114,12 +144,10 @@ export function PendingDraft({
             {COPY.pending}
           </p>
         </div>
-        {/* `whitespace-pre-wrap`: the visitor's own line breaks are part of what
-            they wrote, and a bubble that silently reflows them is a bubble that
-            does not show what will actually be sent. */}
-        <p className="mt-1 max-w-reading whitespace-pre-wrap text-base text-ink">
-          {draft}
-        </p>
+        {/* The body slot. The field carries the visitor's own line breaks because it
+            is a textarea, so what is on screen is what will be sent, which is what
+            the old `whitespace-pre-wrap` paragraph was here to guarantee. */}
+        {field}
       </div>
 
       <div className={hasGuidance ? `border-t px-4 py-4 sm:px-5 ${seam}` : ""}>

@@ -31,9 +31,12 @@ import Link from "next/link";
  *      the relationship between a sentence and a concern is visible rather than
  *      inferred. Guidance after the send was considered and rejected: it would
  *      make the product post-hoc, which is what every incumbent already is.
- *   5. **The composer never moves.** It is pinned to the bottom of the viewport,
- *      outside the scrolling conversation, so guidance arriving at any size cannot
- *      shift the field under a live cursor.
+ *      The field is INSIDE that surface, which is why the draft is rendered
+ *      exactly once on screen.
+ *   5. **Nothing is pinned over the guidance.** The composer's furniture flows at
+ *      the end of the document rather than sticking to the bottom of the viewport.
+ *      See the note above that block: a sticky bar painted over the accept and
+ *      reject buttons, which is the worst thing on this page to hide.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -51,6 +54,7 @@ import {
 import { RecipientSwitch } from "@/app/components/RecipientSwitch";
 import {
   Composer,
+  DraftField,
   applyReplacement,
   suppressionKey,
   tidySpacing,
@@ -81,6 +85,10 @@ const CLEAN_MS = 2000;
 
 /** How close to the bottom counts as following the conversation rather than reading it. */
 const FOLLOW_PX = 220;
+
+/** Breathing room under the pending surface when it is scrolled into view, so the
+ *  accept and reject buttons never sit flush against the bottom of the screen. */
+const FOLLOW_MARGIN_PX = 24;
 
 function clockTime(now: Date): string {
   const hours = String(now.getHours()).padStart(2, "0");
@@ -137,6 +145,14 @@ export default function Home() {
   /** False until the semantic rung has ever been available, for the ready-scan. */
   const everScanned = useRef(false);
   const cleanTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /**
+   * The one draft field, which is rendered inside the pending draft surface while
+   * the example replies that fill it live below that surface. The ref is held here
+   * because it is the only place both of them can see.
+   */
+  const draftRef = useRef<HTMLTextAreaElement | null>(null);
+  /** The pending surface, measured so the follow-scroll can keep its END in view. */
+  const pendingRef = useRef<HTMLDivElement | null>(null);
   /**
    * Every pending reply timer, and the generation that owns them. A reset, or a
    * second send, invalidates the generation, so a reply already in flight cannot
@@ -260,7 +276,11 @@ export default function Home() {
    */
   const topSeverity = useMemo(() => orderedFindings(shown)[0]?.severity, [shown]);
 
+  /** §5.2: an empty draft shows the status line and nothing else. */
+  const hasDraft = draft.trim() !== "";
+
   const hasGuidance = hasGuidanceContent({
+    hasDraft,
     findings: shown,
     kind: thread.recipientKind,
     truncated,
@@ -271,11 +291,9 @@ export default function Home() {
    * Follow the conversation, the way a chat client does.
    *
    * The pending bubble grows as the visitor types and the guidance zone opens
-   * underneath it, both of which extend the document. Pinned to the bottom, the
-   * composer stays exactly where it is while the content behind it scrolls, so the
-   * caret never moves and the thing the visitor is writing never slides out of
-   * view. It deliberately does nothing before the first gesture, and nothing at all
-   * if the visitor has scrolled up to read history.
+   * underneath it, both of which extend the document. It deliberately does nothing
+   * before the first gesture, and nothing at all if the visitor has scrolled up to
+   * read history.
    */
   useEffect(() => {
     const record = () => {
@@ -292,9 +310,31 @@ export default function Home() {
     };
   }, []);
 
+  /**
+   * What gets scrolled into view is the END OF THE PENDING SURFACE, not the end of
+   * the document.
+   *
+   * The two used to be the same thing, because the composer was pinned over the
+   * bottom of the viewport and nothing came after it. Now the example replies, the
+   * send row, the status line and the small print all sit below the surface, and
+   * scrolling to the document's bottom would push the accept and reject buttons off
+   * the top of a short viewport to make room for the disclaimer. So the target is
+   * the surface's own bottom edge, plus a margin so the buttons are not flush with
+   * the screen edge.
+   *
+   * It never scrolls UP: `Math.max(window.scrollY, ...)`. Deleting a few characters
+   * shrinks the surface, and following that upward would drag the page away from
+   * somebody who is editing.
+   */
   useEffect(() => {
     if (!interacted.current || !following.current) return;
-    window.scrollTo({ top: document.documentElement.scrollHeight });
+    const doc = document.documentElement;
+    const node = pendingRef.current;
+    const maxScroll = Math.max(0, doc.scrollHeight - window.innerHeight);
+    const target = node
+      ? window.scrollY + node.getBoundingClientRect().bottom - window.innerHeight + FOLLOW_MARGIN_PX
+      : doc.scrollHeight;
+    window.scrollTo({ top: Math.min(maxScroll, Math.max(window.scrollY, target)) });
   }, [draft, hasGuidance, shown.length, thread.messages.length, typingIn]);
 
   const handleSwitch = useCallback(
@@ -314,12 +354,32 @@ export default function Home() {
     [mode, rules, threads],
   );
 
-  /** A click on an example reply or on the ghost hint. Scans with no debounce. */
+  /**
+   * A click on an example reply or on the ghost hint. Scans with no debounce.
+   *
+   * It also has to leave the caret in the field, at the end of what was inserted.
+   * Clicking the hint unmounts the hint, and clicking an example leaves focus on
+   * the example button; either way the visitor's next keystroke lands nowhere while
+   * the text they just asked for sits in front of them, which reads as a dead page.
+   *
+   * This is not the focus stealing §10 forbids. Nothing here moves the caret unless
+   * the visitor made a gesture that asks for text, and guidance appearing does not
+   * touch focus at all.
+   */
   const handleInsert = useCallback(
     (text: string) => {
       immediate.current = true;
       noteInteraction();
       setDraft(text);
+
+      const node = draftRef.current;
+      if (!node) return;
+      node.focus();
+      // The new value lands on the next render, so the caret is placed after it
+      // rather than against the value this render still holds.
+      requestAnimationFrame(() => {
+        node.setSelectionRange(node.value.length, node.value.length);
+      });
     },
     [noteInteraction],
   );
@@ -482,29 +542,48 @@ export default function Home() {
   }, [flashClean, clearReplies]);
 
   /**
-   * The pending draft, or nothing at all.
+   * The pending draft, which is now always on screen, because it holds the field.
    *
-   * It mounts on the first character and unmounts on send, which is what makes the
-   * distinction between advice and a record structural rather than stated: while it
-   * exists, nothing has been sent. The guidance node is passed as a child and is
-   * always mounted while the bubble is, empty or not, because it owns the polite
-   * live region and a live region that appears at the same moment as its first
-   * content is not reliably announced.
+   * It used to mount on the first character and unmount on send, and the mounting
+   * was doing the work of saying "nothing has been sent yet". That job now belongs
+   * entirely to the `Not sent yet` marker and to the fact that the text leaves the
+   * surface the instant Send is pressed and reappears above with a time on it. What
+   * the old arrangement cost was worse than what it bought: a second copy of the
+   * visitor's sentence in a separate box below.
+   *
+   * The guidance node is a child and is always mounted, empty or not, because it
+   * owns the polite live region and a live region that appears at the same moment as
+   * its first content is not reliably announced.
    */
-  const pending =
-    draft.trim() === "" ? null : (
-      <PendingDraft draft={draft} severity={topSeverity} hasGuidance={hasGuidance}>
+  const pending = (
+    /* The wrapper exists only to be measured by the follow-scroll above. It carries
+       no styling of its own, so the surface's own margin and border are unchanged. */
+    <div ref={pendingRef}>
+      <PendingDraft
+        severity={topSeverity}
+        hasGuidance={hasGuidance}
+        field={
+          <DraftField
+            draft={draft}
+            textareaRef={draftRef}
+            onDraftChange={handleDraftChange}
+            onInsert={handleInsert}
+          />
+        }
+      >
         <GuidancePanel
           findings={shown}
           rules={rules}
           kind={thread.recipientKind}
           truncated={truncated}
           clean={clean}
+          hasDraft={hasDraft}
           onAccept={handleAccept}
           onKeep={handleKeep}
         />
       </PendingDraft>
-    );
+    </div>
+  );
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-app flex-col px-4 sm:px-6">
@@ -547,6 +626,32 @@ export default function Home() {
           <RecipientSwitch mode={mode} onChange={handleSwitch} />
         </Thread>
 
+        {/*
+          The composer's furniture: the example replies, the send control and the
+          status line. The field itself is up in the pending draft surface.
+
+          **Not sticky, and that is the fix rather than an omission.** Sticky at
+          `bottom-0`, this block was lifted out of its own place in the document and
+          painted over whatever was behind it, which at 1280x900 was the guidance:
+          the surface ran to y=1072 while the bar sat at y=604..678, so `Use this`
+          and `Keep mine` were underneath it. Reserving space for it instead would
+          have kept a bar whose only remaining reason to be pinned had already gone:
+          it was pinned so the FIELD could not move under a live cursor, and the
+          field is not in it any more. What is left is a row of buttons and a status
+          line, none of which the visitor is mid-gesture in, and none of which is
+          worth covering an accept button for.
+        */}
+        <div className="mt-8 border-t border-hairline pt-4">
+          <Composer
+            mode={mode}
+            status={status}
+            requestsSinceReady={requestsSinceReady}
+            findings={shown}
+            onInsert={handleInsert}
+            onSend={handleSend}
+          />
+        </div>
+
         {/* The concrete answer to "so how would anyone ever know?": a record can
             exist for the sender without existing for anyone else. Memory only,
             gone on reload, recorded nowhere (T4.7.3). */}
@@ -566,28 +671,10 @@ export default function Home() {
         ) : null}
       </main>
 
-      {/*
-        Pinned, and that is the whole reason guidance can attach to the draft.
-        The visitor is typing into this field; if it moved when a card arrived, the
-        product would be interrupting the sentence it is trying to help with. Sticky
-        rather than fixed, so it occupies its own space at the end of the document
-        and the conversation above it can scroll to a real bottom. The negative
-        margins let its hairline span the column while its content stays aligned
-        with everything above it.
-      */}
-      <div className="sticky bottom-0 -mx-4 mt-8 border-t border-hairline bg-canvas px-4 pt-3 pb-3 sm:-mx-6 sm:px-6 sm:pt-4 sm:pb-4">
-        <Composer
-          draft={draft}
-          mode={mode}
-          status={status}
-          requestsSinceReady={requestsSinceReady}
-          findings={shown}
-          onDraftChange={handleDraftChange}
-          onInsert={handleInsert}
-          onSend={handleSend}
-        />
-        <p className="mt-3 max-w-reading text-2xs text-ink-muted">{COPY.disclaimer}</p>
-      </div>
+      {/* Page-level small print, last on the page. It belonged to the pinned bar
+          while there was one; with the bar gone it is a footer, which is what it
+          always read as. */}
+      <p className="mt-8 max-w-reading pb-8 text-2xs text-ink-muted">{COPY.disclaimer}</p>
     </div>
   );
 }

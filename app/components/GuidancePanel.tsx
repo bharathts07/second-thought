@@ -9,10 +9,12 @@
  * is structural. Never a modal and never a toast (T4.1.4): a modal implies
  * enforcement, and this product does not enforce.
  *
- * This component no longer reserves height. It does not need to: the composer is
- * sticky to the bottom of the viewport and sits outside the scrolling thread, so
- * guidance can arrive at any size without moving the field under a live cursor,
- * which is what `min-h-guidance` was standing in for.
+ * This component no longer reserves height, and it no longer needs to. The field is
+ * ABOVE it inside the same surface, so guidance opening extends the surface
+ * downward and the caret does not move: the reflow happens below the thing the
+ * visitor is looking at, which is what `min-h-guidance` was standing in for.
+ * Nothing is pinned over it either, so the accept and reject buttons cannot be
+ * painted over by the send row (see `page.tsx`).
  *
  * Two rules here are the ones that were previously got wrong in three documents
  * at once:
@@ -197,11 +199,21 @@ const NOTE_CLASS = "animate-rise-in max-w-reading text-sm text-ink-secondary";
  * condition.
  */
 export function hasGuidanceContent(args: {
+  /**
+   * Whether there is anything to give guidance ABOUT. §5.2: an empty draft shows
+   * the status line and nothing else. It has to be an input here rather than a
+   * check at the call site, because the field now lives inside the same surface as
+   * the guidance and is therefore always mounted: without this, the internal
+   * thread would open a guidance zone under an empty field on first paint and
+   * name six categories before the visitor had typed a character.
+   */
+  hasDraft: boolean;
   findings: readonly Finding[];
   kind: RecipientKind;
   truncated: boolean;
   clean: boolean;
 }): boolean {
+  if (!args.hasDraft) return false;
   return (
     args.findings.length > 0 ||
     args.kind === "internal" ||
@@ -218,6 +230,8 @@ type GuidancePanelProps = {
   truncated: boolean;
   /** `panel.clean`, shown for 2s after a scan resolved with nothing to say. */
   clean: boolean;
+  /** §5.2, and the same flag `hasGuidanceContent` branches on, so the two agree. */
+  hasDraft: boolean;
   onAccept: (finding: Finding, option: RemediationOption) => void;
   onKeep: (finding: Finding) => void;
 };
@@ -228,6 +242,7 @@ export function GuidancePanel({
   kind,
   truncated,
   clean,
+  hasDraft,
   onAccept,
   onKeep,
 }: GuidancePanelProps) {
@@ -235,7 +250,11 @@ export function GuidancePanel({
 
   return (
     <div aria-live="polite" aria-label={COPY.guidanceLabel}>
-      {shown.length > 0 ? (
+      {/* The live region stays mounted with nothing in it while the draft is empty.
+          A region that appears at the same moment as its first content is not
+          reliably announced, and an empty draft has nothing to say about it
+          anyway (§5.2). */}
+      {!hasDraft ? null : shown.length > 0 ? (
         <div className="flex flex-col">
           {shown.map((finding, index) => (
             /* Two findings on one draft are two zones of one surface, so a hairline

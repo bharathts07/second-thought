@@ -10,7 +10,9 @@
  *
  * Several of these tests exist because a reviewed defect was found here first:
  * F9 (which occurrence an accept acts on), F25 (no `example.com` in the internal
- * thread), F26 (the internal line is derived), F27 (the ghost is not the value).
+ * thread), F26 (the internal line is derived), F27 (the ghost is not the value),
+ * and the duplicated draft, which was measured in a browser: the visitor's sentence
+ * rendered once in the pending bubble and once in a separate composer box below it.
  */
 
 import { describe, expect, it } from "vitest";
@@ -19,6 +21,9 @@ import { COMPANY_RULES } from "@/app/lib/policies";
 import type { Finding, PolicyRule, Severity } from "@/app/lib/types";
 import type { EngineStatus } from "@/app/lib/useEngine";
 import {
+  COMPOSER_LABEL,
+  Composer,
+  DraftField,
   EXAMPLE_REPLIES,
   GHOST_HINT,
   GHOST_INSERT,
@@ -31,13 +36,16 @@ import {
   visibleFindings,
 } from "./Composer";
 import {
+  GuidancePanel,
   cappedFindings,
   findingsInScope,
+  hasGuidanceContent,
   internalGuidanceLine,
   orderedFindings,
   overflowLine,
   scopedCategories,
 } from "./GuidancePanel";
+import { PendingDraft } from "./PendingDraft";
 import { THREAD_EXTERNAL, THREAD_INTERNAL, Thread } from "./Thread";
 
 const PROMISE_TEXT = "Yes, we guarantee your data never leaves the US.";
@@ -347,6 +355,181 @@ describe("the ghost hint", () => {
     expect(GHOST_INSERT).toBe(PROMISE_TEXT);
     expect(GHOST_HINT).not.toBe(GHOST_INSERT);
     expect(GHOST_HINT).toContain(GHOST_INSERT.slice(0, -1));
+  });
+});
+
+/**
+ * The draft is on screen exactly once, and the field is the bubble.
+ *
+ * Measured in a browser before this pass: the sentence appeared in the pending
+ * bubble AND in a textarea in a bordered box underneath it, so a visitor read their
+ * own words twice and the bubble looked like a preview of a form field rather than
+ * the message it is. These tests hold the structure that fixed it.
+ *
+ * The measuring twin inside the field is stripped before counting. It is
+ * `aria-hidden` and `visibility: hidden`, so it is not on screen and not in the
+ * accessibility tree; it exists only so the field can be exactly as tall as its text
+ * without an effect that reads `scrollHeight` on every keystroke.
+ */
+describe("one field, one copy of the draft", () => {
+  const stripTwins = (markup: string) =>
+    markup.replace(/<div aria-hidden="true"[\s\S]*?<\/div>/g, "");
+
+  /**
+   * `withGuidance` is off for the counting test on purpose. A card QUOTES the
+   * sentence it is about (§7), which is a second appearance of the same string and
+   * a deliberate one: the quotation is what says which words the card means. The
+   * defect was the field's copy, so the count is taken with the guidance zone empty.
+   */
+  const surface = (draft: string, withGuidance = true) =>
+    renderToStaticMarkup(
+      <PendingDraft
+        severity={draft === "" || !withGuidance ? undefined : "high"}
+        hasGuidance={draft !== "" && withGuidance}
+        field={
+          <DraftField
+            draft={draft}
+            textareaRef={{ current: null }}
+            onDraftChange={() => {}}
+            onInsert={() => {}}
+          />
+        }
+      >
+        <GuidancePanel
+          findings={draft === "" || !withGuidance ? [] : [finding()]}
+          rules={COMPANY_RULES}
+          kind="external-domain"
+          truncated={false}
+          clean={false}
+          hasDraft={draft !== "" && withGuidance}
+          onAccept={() => {}}
+          onKeep={() => {}}
+        />
+      </PendingDraft>,
+    );
+
+  const furniture = () =>
+    renderToStaticMarkup(
+      <Composer
+        mode="external"
+        status={READY}
+        requestsSinceReady={0}
+        findings={[finding()]}
+        onInsert={() => {}}
+        onSend={() => {}}
+      />,
+    );
+
+  it("renders the visitor's sentence once across the surface and the furniture", () => {
+    const markup = stripTwins(surface(PROMISE_TEXT, false)) + furniture();
+    expect(occurrences(markup, PROMISE_TEXT)).toHaveLength(1);
+  });
+
+  /** With a card open the second appearance is the card's quotation, and no more. */
+  it("adds only the card's own quotation when guidance is open", () => {
+    const markup = stripTwins(surface(PROMISE_TEXT)) + furniture();
+    expect(occurrences(markup, PROMISE_TEXT)).toHaveLength(2);
+    expect(markup).toContain(`“${PROMISE_TEXT}”`);
+  });
+
+  /** The composer below the surface has no field of its own left to duplicate into. */
+  it("leaves no textarea outside the pending surface", () => {
+    expect(furniture()).not.toContain("<textarea");
+    expect(surface(PROMISE_TEXT)).toContain("<textarea");
+  });
+
+  it("keeps the field's accessible name", () => {
+    expect(surface("")).toContain(`aria-label="${COMPOSER_LABEL}"`);
+    expect(surface(PROMISE_TEXT)).toContain(`aria-label="${COMPOSER_LABEL}"`);
+  });
+
+  /**
+   * No box of its own, because the surface is the box. A bordered field inside a
+   * bordered bubble is the nested card this design system bans outright, and it is
+   * what made the duplicate read as two separate objects.
+   */
+  it("gives the field no border, no background and no padding of its own", () => {
+    const markup = surface(PROMISE_TEXT);
+    const field = markup.slice(markup.indexOf("<textarea"));
+    expect(field).toContain("border-0");
+    expect(field).toContain("bg-transparent");
+    expect(field).toContain("p-0");
+    // Auto-grown by the twin, so the drag handle would fight the measurement.
+    expect(field).toContain("resize-none");
+  });
+
+  /**
+   * The focus ring is on the surface, and there is exactly one of them. `:has()`
+   * rather than `focus-within`, or the accept and reject buttons inside the surface
+   * would light the whole bubble up alongside their own ring.
+   */
+  it("puts the focus treatment on the surface and not inside it", () => {
+    const markup = surface(PROMISE_TEXT);
+    expect(markup).toContain("has-[textarea:focus-visible]:outline-2");
+    expect(markup).toContain("has-[textarea:focus-visible]:outline-accent");
+    expect(markup).not.toContain("focus-within:");
+    const field = markup.slice(markup.indexOf("<textarea"));
+    expect(field).toContain("focus-visible:outline-hidden");
+  });
+
+  /** F27, in its new home: the hint is display-only and never the field's value. */
+  it("shows the ghost hint only while the field is empty", () => {
+    // The hint carries quotation marks, which `renderToStaticMarkup` escapes.
+    const escaped = GHOST_HINT.replaceAll('"', "&quot;");
+    expect(surface("")).toContain(escaped);
+    // Empty means empty: the hint is not the value, so the textarea is bare.
+    expect(surface("")).toContain("></textarea>");
+    const typed = surface(PROMISE_TEXT, false);
+    expect(typed).not.toContain(escaped);
+    expect(typed).toContain(GHOST_INSERT);
+  });
+});
+
+/**
+ * §5.2: an empty draft shows the status line and nothing else.
+ *
+ * This used to be free, because the pending surface only mounted once there was a
+ * character in the draft. The surface now holds the field and is always mounted, so
+ * the rule has to be stated: without it the internal thread would open a guidance
+ * zone under an empty field on first paint and name six categories before the
+ * visitor had typed anything.
+ */
+describe("guidance needs a draft", () => {
+  const args = { findings: [], truncated: false, clean: false } as const;
+
+  it("stays shut on an empty draft, including on the internal thread", () => {
+    expect(hasGuidanceContent({ ...args, hasDraft: false, kind: "internal" })).toBe(false);
+    expect(hasGuidanceContent({ ...args, hasDraft: false, clean: true, kind: "external-domain" })).toBe(
+      false,
+    );
+    expect(
+      hasGuidanceContent({ ...args, hasDraft: false, findings: [finding()], kind: "external-domain" }),
+    ).toBe(false);
+  });
+
+  it("opens as soon as there is one", () => {
+    expect(hasGuidanceContent({ ...args, hasDraft: true, kind: "internal" })).toBe(true);
+    expect(
+      hasGuidanceContent({ ...args, hasDraft: true, findings: [finding()], kind: "external-domain" }),
+    ).toBe(true);
+    expect(hasGuidanceContent({ ...args, hasDraft: true, kind: "external-domain" })).toBe(false);
+  });
+
+  it("renders nothing but the live region while the draft is empty", () => {
+    const markup = renderToStaticMarkup(
+      <GuidancePanel
+        findings={[]}
+        rules={COMPANY_RULES}
+        kind="internal"
+        truncated={false}
+        clean={false}
+        hasDraft={false}
+        onAccept={() => {}}
+        onKeep={() => {}}
+      />,
+    );
+    expect(markup).toContain('aria-live="polite"');
+    expect(markup).not.toContain("Internal conversation");
   });
 });
 

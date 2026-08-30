@@ -1,7 +1,16 @@
 "use client";
 
 /**
- * The composer: textarea, ghost hint, status line, example replies, send control.
+ * The composer: the draft field, the ghost hint, the status line, the example
+ * replies and the send control.
+ *
+ * **The field is not here on screen any more, only in this file.** `DraftField`
+ * is exported and rendered INSIDE the pending draft surface, in the slot the
+ * draft's body used to occupy. Before that, the sentence the visitor typed was
+ * painted twice, once as the bubble's body and once in a bordered box below it,
+ * and a visitor reading their own sentence twice reads a bug. One field, one
+ * copy of the text, and the bubble is the thing you type into. The furniture
+ * below (examples, send, status) stays with this component.
  *
  * The pure decisions live in exported functions at the top of the file rather
  * than inside the component, because they are the parts with a right answer:
@@ -24,7 +33,7 @@
  *     claim would die on.
  */
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import type { EngineStatus } from "@/app/lib/useEngine";
 import type { Finding } from "@/app/lib/types";
 import type { ThreadMode } from "./Thread";
@@ -57,6 +66,9 @@ const COPY = {
 
 export const GHOST_HINT = COPY.ghost;
 export const GHOST_INSERT = COPY.ghostInsert;
+/** The field's accessible name. Exported so it can be asserted on, and so the
+ *  name cannot drift now that the field renders inside another component. */
+export const COMPOSER_LABEL = COPY.composerLabel;
 
 const DEVICE_LABEL = { webgpu: "WebGPU", wasm: "WASM" } as const;
 
@@ -310,10 +322,10 @@ const SEND_CLASS =
  * `Send` becomes `Send anyway` at the exact moment an unresolved HIGH appears,
  * which is the same moment guidance opens. That is 48px more button, taken out of
  * the `flex-1` examples row beside it, which wrapped to a second line and made the
- * whole pinned composer 41px taller. Pinned to the bottom of the viewport, a taller
- * composer has a HIGHER top edge: the field the visitor is mid-sentence in jumped up
- * under their cursor precisely when the product was supposed to be unobtrusive.
- * Measured in a browser at 1512px, 39px row to 80px.
+ * whole row 41px taller at the one instant the visitor is reading the card above it.
+ * Measured in a browser at 1512px, 39px row to 80px. A row that grows here pushes
+ * the accept and reject buttons up the screen, which is the last thing that should
+ * move while somebody is deciding whether to press one of them.
  *
  * A 1x1 grid with both labels stacked is the fix, because it sizes the control to
  * the widest string it will ever hold without naming a pixel width that would need
@@ -331,113 +343,148 @@ function SendLabel({ label }: { label: string }) {
   );
 }
 
-/** The composer itself, and the ghost overlay, which must keep identical padding. */
-const FIELD_PADDING = "px-4 py-3";
+/**
+ * The draft field, which is the pending message's body.
+ *
+ * It has no box of its own: no border, no background, no padding, no radius, and
+ * the message type size and ink. The surface it sits in supplies all of that,
+ * because the surface IS the field now, which is also where the focus ring goes
+ * (see `PendingDraft`). A bordered field inside a bordered bubble would be the
+ * nested card this design system bans, and it would put a second ring inside the
+ * one that already means "this is where you are typing".
+ *
+ * **Auto-grow without measuring anything.** A hidden twin of the text shares one
+ * grid cell with the textarea and carries identical type, so the cell is exactly
+ * as tall as the text wants to be and the textarea stretches to it. The
+ * alternative, an effect that reads `scrollHeight` and writes `style.height`,
+ * costs a forced reflow on every keystroke and lands one frame late, which is
+ * visible as a jitter on the line that wraps.
+ *
+ * Three details in there are load-bearing:
+ *
+ *   - **The twin holds `draft + " "`**, not `draft`. A trailing space reserves the
+ *     room the caret needs at the end of a full line, and a trailing NEWLINE
+ *     instead would reserve a whole empty line and read as a gap.
+ *   - **`min-h-12` is two lines**, which is what the ghost hint occupies when it
+ *     wraps at ~390px. Without it the first keystroke would collapse the field
+ *     from two lines to one, and the requirement is no layout jump on the first
+ *     character.
+ *   - **`max-h-64` on both layers** caps the growth at around ten lines, so the
+ *     scrollbar appears only when the draft is genuinely tall rather than at the
+ *     third line.
+ *
+ * The field is full width rather than held to a reading measure, even though the
+ * message bodies above it are. The measure is a reading aid, and here the width
+ * is also the click target: the visitor should be able to click anywhere across
+ * the bubble and land a caret. 46rem minus the surface's padding is roughly 80
+ * characters, which is wide for reading and correct for writing your own sentence.
+ */
+export function DraftField({
+  draft,
+  textareaRef,
+  onDraftChange,
+  onInsert,
+}: {
+  draft: string;
+  /** Owned by the page, because the example replies focus this field too. */
+  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+  onDraftChange: (draft: string) => void;
+  /** A click on the hint, or Enter on an empty field. Scans with no debounce (§6). */
+  onInsert: (text: string) => void;
+}) {
+  const showGhost = draft === "";
+
+  return (
+    <div className="mt-1 grid min-h-12">
+      {/* The twin. `aria-hidden` and `invisible` rather than `hidden`, because it
+          has to be laid out to be measured. `break-words` matches what a textarea
+          does to a long unbroken string, or the twin would under-measure it. */}
+      <div
+        aria-hidden="true"
+        className="invisible col-start-1 row-start-1 max-h-64 overflow-hidden whitespace-pre-wrap break-words text-base text-ink"
+      >
+        {`${draft} `}
+      </div>
+
+      <textarea
+        ref={textareaRef}
+        aria-label={COPY.composerLabel}
+        value={draft}
+        /* One row. The twin decides the height from here on, and `rows={2}` would
+           set a two-line floor in the wrong place: `min-h-12` on the wrapper is
+           where that floor belongs, because the ghost hint has to fit in it too. */
+        rows={1}
+        onChange={(event) => onDraftChange(event.target.value)}
+        onKeyDown={(event) => {
+          /* Enter inserts the hint only while the field is empty (§4). Otherwise
+             Enter is a newline: this is a chat composer, and a send on Enter
+             beside an open card would read as a trap. */
+          if (event.key === "Enter" && !event.shiftKey && draft === "") {
+            event.preventDefault();
+            onInsert(COPY.ghostInsert);
+          }
+        }}
+        /* `outline-hidden` rather than `outline-none`: it still paints a visible
+           outline under forced colours, and the ring the visitor sees is the one
+           on the surface. globals.css owns the only `outline: none` in the
+           project and this is not a second one. */
+        className="col-start-1 row-start-1 w-full resize-none overflow-y-auto border-0 bg-transparent p-0 text-base text-ink focus-visible:outline-hidden"
+      />
+
+      {/* The hint shares the same grid cell and is `pointer-events-none`, so a
+          click anywhere in the field still places a caret. Only the hint's own
+          text takes the click, which is the explicit gesture §4 asks for. It
+          renders after the textarea so no z-index is needed. Focus alone inserts
+          nothing: this is a hint, never the textarea's value (F27). */}
+      {showGhost ? (
+        <div className="pointer-events-none col-start-1 row-start-1">
+          <button
+            type="button"
+            tabIndex={-1}
+            onClick={() => onInsert(COPY.ghostInsert)}
+            className="pointer-events-auto text-left text-base text-ink-muted"
+          >
+            {COPY.ghost}
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 type ComposerProps = {
-  draft: string;
   mode: ThreadMode;
   status: EngineStatus;
   requestsSinceReady: number | null;
   /** Already filtered to what is on screen, so the label matches the cards. */
   findings: readonly Finding[];
-  onDraftChange: (draft: string) => void;
-  /** A click on an example or on the hint. Scans with no debounce (§6). */
+  /** A click on an example. Scans with no debounce (§6). */
   onInsert: (text: string) => void;
   onSend: (note: string) => void;
 };
 
 export function Composer({
-  draft,
   mode,
   status,
   requestsSinceReady,
   findings,
-  onDraftChange,
   onInsert,
   onSend,
 }: ComposerProps) {
   const line = statusLine(status, requestsSinceReady);
   const label = sendLabel(findings);
   const highUnresolved = label === COPY.sendAnyway;
-  const showGhost = draft === "";
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-
-  /**
-   * An insert has to leave the caret in the composer, at the end of what was
-   * inserted.
-   *
-   * Clicking the hint or an example unmounts the hint, or leaves focus on the
-   * example button, and either way the visitor's next keystroke lands nowhere
-   * while the text they just asked for sits in front of them. That reads as a
-   * dead page.
-   *
-   * This is not the focus stealing §10 forbids. Nothing here moves the caret
-   * unless the visitor made a gesture that asks for text, and a card appearing
-   * does not touch focus at all.
-   */
-  const insert = (text: string) => {
-    onInsert(text);
-    const node = textareaRef.current;
-    if (!node) return;
-    node.focus();
-    // The new value lands on the next render, so the caret is placed after it
-    // rather than against the value this render still holds.
-    requestAnimationFrame(() => {
-      node.setSelectionRange(node.value.length, node.value.length);
-    });
-  };
 
   return (
     <div>
-      <div className="relative">
-        <textarea
-          ref={textareaRef}
-          aria-label={COPY.composerLabel}
-          value={draft}
-          /* Two rows, not three. The field is pinned to the bottom of the viewport
-             now, so every row it holds is a row of the conversation the visitor
-             cannot see, and it is still `resize-y` for anyone who wants more. */
-          rows={2}
-          onChange={(event) => onDraftChange(event.target.value)}
-          onKeyDown={(event) => {
-            /* Enter inserts the hint only while the composer is empty (§4).
-               Otherwise Enter is a newline: this is a chat composer, and a send
-               on Enter beside an open card would read as a trap. */
-            if (event.key === "Enter" && !event.shiftKey && draft === "") {
-              event.preventDefault();
-              insert(COPY.ghostInsert);
-            }
-          }}
-          className={`w-full resize-y rounded-lg border border-control bg-surface ${FIELD_PADDING} text-base text-ink transition-control`}
-        />
-
-        {/* The hint paints over the empty textarea and is `pointer-events-none`,
-            so a click anywhere in the composer still places a caret. Only the
-            hint's own text takes the click, which is the explicit gesture §4
-            asks for. It renders after the textarea so no z-index is needed. */}
-        {showGhost ? (
-          <div className={`pointer-events-none absolute inset-0 ${FIELD_PADDING}`}>
-            <button
-              type="button"
-              tabIndex={-1}
-              onClick={() => insert(COPY.ghostInsert)}
-              className="pointer-events-auto text-left text-base text-ink-muted"
-            >
-              {COPY.ghost}
-            </button>
-          </div>
-        ) : null}
-      </div>
-
       {/*
-        One row on every screen, because the composer is pinned and every row it
-        grows is a row of the conversation the visitor cannot see. At ~390px three
-        stacked example pills plus a full-width send took a third of the phone. The
+        One row on every screen. At ~390px three stacked example pills plus a
+        full-width send took a third of the phone, and this row now sits below the
+        draft surface, so every line it grows pushes the guidance further up. The
         examples scroll sideways instead, bleeding to the edges so the row reads as
         scrollable rather than clipped, and they wrap normally once there is room.
       */}
-      <div className="mt-3 flex items-start gap-3">
+      <div className="flex items-start gap-3">
         <div
           role="group"
           aria-label={COPY.examplesLabel}
@@ -448,7 +495,7 @@ export function Composer({
               key={example.id}
               type="button"
               className={QUIET_BUTTON}
-              onClick={() => insert(example.text)}
+              onClick={() => onInsert(example.text)}
             >
               {example.label}
             </button>
@@ -462,12 +509,11 @@ export function Composer({
         The first ten seconds of this product, which are the ten seconds every
         visitor sees and the ones most likely to be spent on nothing.
 
-        It sits BELOW the send row now rather than between the field and the actions.
-        The composer is pinned to the bottom of the viewport, so the quietest line in
-        it belongs at the quietest edge, and putting it last means the send button
-        cannot move when the booting state's second line goes away. The reserved
-        height stays, because the pinned bar's own height must not change either:
-        without it the whole composer would step down the screen when the download
+        It sits BELOW the send row rather than between the field and the actions: it
+        is the quietest line here and it belongs at the quietest edge. Putting it
+        last also means the send button cannot move when the booting state's second
+        line goes away, and the reserved height is what stops everything above it,
+        the guidance included, from stepping down the screen when the download
         finishes (§2).
       */}
       <div className="mt-3 min-h-status">
