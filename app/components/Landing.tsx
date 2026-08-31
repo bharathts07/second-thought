@@ -48,83 +48,56 @@ const COPY = {
   wordmark: "Second Thought",
   h1: "A second thought, before you hit send.",
   lead:
-    "Your company has rules about what you can promise, what you can share, and how you talk to " +
-    "people. When someone is waiting, they are easy to cross without noticing. Second Thought " +
-    "reads your draft on your own computer, points out the line that could cause trouble, and " +
-    "offers a safer way to say it.",
+    "Your company has rules about what you can promise, share, and say. When someone is waiting, " +
+    "they are easy to cross. Second Thought reads your draft on your own computer and points out " +
+    "the line that could cause trouble.",
   primaryCta: "Try it",
   secondaryCta: "Read the announcement",
   privacyNote: "It runs on your computer. Nobody else sees what you type.",
 
   section01Heading: "Nobody sets out to break a rule",
   section01P1:
-    "A customer is waiting. You have three minutes before your next meeting. You write one " +
-    "sentence that crosses a line, and nobody notices. It might be a promise your company cannot " +
-    "stand behind, a price or date you cannot commit to, a sharp word about a colleague, or an " +
-    "offer to move the conversation somewhere it will not be recorded.",
+    "A customer is waiting. You have three minutes. You write a sentence that crosses a line. " +
+    "A promise your company cannot stand behind, a price you cannot commit to, or an offer to " +
+    "move elsewhere.",
   section01P2:
-    "Months later that sentence is the thing being quoted back, in a room where nobody " +
-    "remembers the context and the person who typed it may not even work there any more.",
-  section01P3:
-    "The rule you broke usually already existed. It was in a policy document, which is a fine " +
-    "place for a rule and the wrong place for it at the moment you are typing. Nobody opens a " +
-    "policy document mid-sentence.",
+    "Months later that sentence is being quoted back.",
 
   section02Heading: "It works for you, not on you",
   section02P1:
-    "The person who gets in trouble is the person who typed the sentence. Almost everything in " +
-    "this space is built for the employer and reviews messages after they are sent. This is " +
-    "built for the person writing, before.",
+    "The person in trouble is the person who typed it. Almost everything in this space is built " +
+    "for the employer. This is built for you.",
   section02P2:
-    "It runs on your own machine. There is no console showing anyone what you wrote, no " +
-    "reporting on anyone, nothing kept. It never blocks a message, because the person sending " +
-    "it is the one who decides.",
-  section02P3:
-    "And the rule set deliberately does not look at pay, hours, working conditions or " +
-    "organising, which is enforced in code rather than promised in prose. Protecting the " +
-    "employer and protecting the employee are the same job here, and the employee is the one " +
-    "standing closest to the risk.",
+    "No console, no reporting, nothing kept. The rule set excludes labour relations, enforced in code.",
 
   section03Heading: "A note in the margin, before you send",
-  section03P1:
-    "Three moves. When a sentence could cause trouble, guidance appears attached to the words " +
-    "it is about, with a way to say it that keeps your meaning.",
   section03Move1Title: "It reads the draft as you type",
-  section03Move1Body: "On your own computer, as you write. There is nothing to turn on and nothing to send off.",
+  section03Move1Body: "As you write. Nothing to turn on.",
   section03Move2Title: "It puts the note under the sentence",
   section03Move2Body:
-    "When a sentence could cause trouble, guidance appears attached to the words it is about, " +
-    "with a way to say it that keeps your meaning.",
+    "When a sentence could cause trouble, guidance appears.",
   section03Move3Title: "You decide",
   section03Move3Body:
-    "Take the suggested wording or keep your own. It never blocks a message, and it never tells " +
-    "anyone what you wrote.",
+    "Take the suggested wording or keep your own.",
 
   section04Heading: "Try it",
   section04Seam:
-    "That is the argument. This is the working thing, running here in this page. Answer Sam's " +
-    "question, and watch what happens when you promise something specific.",
+    "That is the argument. This is the working thing. Answer Sam and watch.",
   section04Harness:
-    "This conversation is a demo surface built to show the checker. The intended form is an " +
-    "extension for the tools your team already use.",
+    "This is a demo. The intended form is an extension.",
 
   section05Heading: "You do not have to take our word for it",
   section05P1:
-    "Let the page finish getting ready, then turn your network off and keep typing. The checking " +
-    "keeps working, because the checker is already on your machine and there is no server that " +
-    "could receive a draft.",
+    "Let the page load, then turn your network off. The checking keeps working.",
   section05Eyebrow: "What it does not do",
   section05Limit1:
-    "It never stops you sending anything. It is advisory, and every note can be dismissed.",
+    "It never stops you sending anything.",
   section05Limit2:
-    "Its accuracy has not been measured yet. The rules are tuned by judgement rather than by " +
-    "evidence, and we will not publish a number we have not earned.",
+    "Accuracy has not been measured. Tuned by judgement.",
   section05Limit3:
-    "Eight rules, and they are a demonstration of the idea rather than a compliance programme. " +
-    "They cover what you can promise about security and data residency, delivery dates, pricing " +
-    "and discounts, moving a conversation somewhere unrecorded, personal criticism of a " +
-    "colleague, and strong language.",
-  section05Limit4: "English only, one surface, and no console, no telemetry, no reporting on anyone.",
+    "Eight rules, a demonstration. Security promises, data residency, delivery dates, pricing, " +
+    "moving conversations, and personal criticism.",
+  section05Limit4: "English only, one surface.",
 
   disclaimer:
     "Second Thought is a drafting aid. It does not provide legal or compliance advice and " +
@@ -226,15 +199,13 @@ function HeroArtifact() {
 
         {/* Title */}
         <h3 className="text-lg font-semibold text-ink">
-          An unconditional promise about where data is stored
+          An unconditional promise about data residency
         </h3>
 
         {/* Suggested wording */}
         <div className="flex flex-col gap-rhythm-stack-tight">
           <p className="text-sm text-ink-secondary">
-            Our data-residency options depend on your deployment and contract
-            terms. I can put you in touch with our security team for the
-            specifics.
+            Our data-residency options depend on your deployment and contract. I can connect you with our security team.
           </p>
         </div>
 
@@ -317,7 +288,6 @@ export function Landing({ demoSlot }: { demoSlot: ReactNode }) {
         <div className="mt-6 flex max-w-reading flex-col gap-4 font-serif text-base text-ink-secondary sm:text-lg">
           <p>{COPY.section01P1}</p>
           <p>{COPY.section01P2}</p>
-          <p>{COPY.section01P3}</p>
         </div>
       </Band>
 
@@ -332,7 +302,6 @@ export function Landing({ demoSlot }: { demoSlot: ReactNode }) {
         <div className="mt-6 flex max-w-reading flex-col gap-4 font-serif text-base text-ink-secondary sm:text-lg">
           <p>{COPY.section02P1}</p>
           <p>{COPY.section02P2}</p>
-          <p>{COPY.section02P3}</p>
         </div>
       </Band>
 
@@ -343,9 +312,6 @@ export function Landing({ demoSlot }: { demoSlot: ReactNode }) {
         <h2 className="font-serif text-2xl font-semibold text-ink sm:text-3xl">
           {COPY.section03Heading}
         </h2>
-        <p className="mt-6 max-w-reading font-serif text-base text-ink-secondary sm:text-lg">
-          {COPY.section03P1}
-        </p>
         <ol className="mt-6 flex max-w-reading flex-col gap-5">
           <li className="flex gap-4">
             <span className="shrink-0 font-mono text-lg font-medium tabular-nums text-accent">

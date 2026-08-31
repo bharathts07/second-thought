@@ -111,6 +111,7 @@ describe("roadmap: status section is honest", () => {
   it("lists shipped features", () => {
     const body = text(markup());
     expect(body).toContain("In-browser checker");
+    expect(body).toContain("Wording checks");
     expect(body).toContain("Shipped");
   });
 
@@ -124,7 +125,13 @@ describe("roadmap: status section is honest", () => {
   it("labels unbuilt features as Not built", () => {
     const body = text(markup());
     expect(body).toContain("Browser extension");
+    expect(body).toContain("Rewrite in your own voice");
     expect(body).toContain("Not built");
+  });
+
+  it("states that rewrite needs a generative model", () => {
+    const body = text(markup());
+    expect(body).toContain("generative model");
   });
 
   it("never invents a version number or percentage", () => {
@@ -160,20 +167,19 @@ describe("roadmap: tone", () => {
 });
 
 describe("roadmap: what downloads section", () => {
-  it("lists all three tiers with their sizes", () => {
+  it("lists both tiers with their sizes", () => {
     const body = text(markup());
     expect(body).toContain("~150KB");
     expect(body).toContain("~22MB");
-    expect(body).toContain("~280MB");
   });
 
   it("explains that pattern checks run immediately", () => {
     const body = text(markup());
-    expect(body).toContain("Pattern checks are already running");
+    expect(body).toContain("Pattern checks run immediately");
   });
 
-  it("states that wording checks need a one-time download", () => {
+  it("states that wording checks are a one-time download", () => {
     const body = text(markup());
-    expect(body).toContain("one-time 22MB download");
+    expect(body).toContain("One-time download");
   });
 });

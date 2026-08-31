@@ -63,7 +63,7 @@ describe("Landing component structure", () => {
     const markup = render();
     expect(markup).toContain("A second thought, before you hit send.");
     expect(markup).toContain(
-      "Your company has rules about what you can promise, what you can share, and how you talk to people",
+      "Your company has rules about what you can promise, share, and say",
     );
   });
 
@@ -171,8 +171,8 @@ describe("The four limits in section 05", () => {
   it("renders all four 'what it does not do' limits", () => {
     const markup = render();
     expect(markup).toContain("It never stops you sending anything");
-    expect(markup).toContain("Its accuracy has not been measured yet");
-    expect(markup).toContain("Eight rules, and they are a demonstration");
+    expect(markup).toContain("Accuracy has not been measured");
+    expect(markup).toContain("Eight rules, a demonstration");
     expect(markup).toContain("English only, one surface");
   });
 
@@ -246,11 +246,10 @@ describe("Disclaimer", () => {
 });
 
 describe("Links", () => {
-  it("provides links to Press, Rules, and GitHub in the footer", () => {
+  it("provides links to Press and Settings", () => {
     const markup = render();
     expect(markup).toContain('href="/press"');
     expect(markup).toContain('href="/settings"');
-    expect(markup).toContain("github.com/bharathts07/second-thought");
   });
 });
 
@@ -295,11 +294,11 @@ describe("Hero artifact", () => {
     expect(markup).toContain("High");
     // Title
     expect(markup).toContain(
-      "An unconditional promise about where data is stored",
+      "An unconditional promise about data residency",
     );
     // Suggested wording
     expect(markup).toContain(
-      "Our data-residency options depend on your deployment and contract terms",
+      "Our data-residency options depend on your deployment and contract",
     );
     // Both choice labels
     expect(markup).toContain("Use this");

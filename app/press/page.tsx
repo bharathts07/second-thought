@@ -186,11 +186,8 @@ export default function PressPage() {
                 Stay inside your company&rsquo;s rules, before you hit send.
               </ProseTitle>
               <ProseLead>
-                Your company has rules about what you can promise, what you can share,
-                and how you talk to people. When you are busy and someone is waiting,
-                they are easy to cross without noticing. Second Thought reads your draft
-                on your own computer, points out the line that could cause trouble, and
-                offers a safer way to say it.
+                Second Thought reads your draft locally, points out risky phrasing,
+                and offers safer wording.
               </ProseLead>
             </div>
 
@@ -219,56 +216,6 @@ export default function PressPage() {
                 <span aria-hidden="true" className="text-ink-secondary">→</span>
               </Link>
             </div>
-          </Prose>
-        </Band>
-
-
-        <Band tone="tint" as="section" id="the-gap" aria-labelledby="the-gap-heading">
-          <Prose>
-            <ProseSectionHeading id="the-gap-heading">
-              The gap is not the rule, it&rsquo;s the moment
-            </ProseSectionHeading>
-            <ProseP>
-              Your company has rules about what you can promise, what data you can
-              share, how to talk about delivery dates and pricing. That wording is in
-              a policy PDF or an internal wiki. The person typing the reply has four
-              minutes before their next meeting and is not going to open a policy
-              document.
-            </ProseP>
-            <ProseP>
-              Nobody sets out to break the rule, but someone answering a waiting
-              customer types one sentence more confident than the company can stand
-              behind. That sentence becomes evidence when the relationship breaks down.
-              Regulators have issued fines totalling over $3B since 2021 over how
-              business communications were kept and supervised. The gap is not that the
-              rule does not exist. The gap is that it exists in the wrong place.
-            </ProseP>
-          </Prose>
-        </Band>
-
-
-        <Band tone="paper" as="section" id="the-moment" aria-labelledby="the-moment-heading">
-          <Prose>
-            <ProseSectionHeading id="the-moment-heading">
-              Put the rule where you are typing
-            </ProseSectionHeading>
-            <ProseP>
-              The useful moment is before the message leaves. Second Thought sits under
-              the composer and says nothing until a sentence is worth reconsidering. When
-              one is, a card appears with the rule in plain language, the reason that
-              phrasing is risky, and suggested wording you can take with one click or
-              leave alone. Nothing is held back from sending.
-            </ProseP>
-            <ProseP>
-              The checking happens on your own machine. That is not a promise to trust;
-              it is a property of how it is built. The checks run inside your browser.
-              There is no server that could receive what you type.
-            </ProseP>
-            <ProseP>
-              Switch the recipient from your own team to a customer, leave the draft as
-              it is, and watch what it flags change.{" "}
-              <TextLink href="/">Try it in this browser</TextLink>.
-            </ProseP>
           </Prose>
         </Band>
 
@@ -310,11 +257,6 @@ export default function PressPage() {
               Why it runs on your machine
             </ProseSectionHeading>
             <ProseP>
-              This is a design constraint, not a feature added later. The reasoning below
-              is about why this product is built this way. None of it is a claim about
-              anyone else&rsquo;s software, and none of it is legal advice.
-            </ProseP>
-            <ProseP>
               Section 7 of the NLRA protects most private-sector employees discussing pay
               and working conditions. Regulators have at times pressed for heightened
               scrutiny of monitoring technology on that basis; the specific NLRB General
@@ -340,9 +282,8 @@ export default function PressPage() {
               </p>
             </ProseCallout>
             <ProseP>
-              The site is a set of static files, its content security policy permits
-              connections to this origin and nowhere else, and the network tab is the
-              entire audit.
+              The site is static files, its content security policy permits connections
+              to this origin only, and the network tab is the entire audit.
             </ProseP>
           </Prose>
         </Band>
@@ -355,24 +296,12 @@ export default function PressPage() {
             </ProseSectionHeading>
             <ProseList>
               <ProseListItem>
-                <strong>No console.</strong> There is no view where anyone could read
-                what you typed. That is not a permission left switched off; the surface
-                does not exist.
-              </ProseListItem>
-              <ProseListItem>
                 <strong>No telemetry of any kind.</strong> The status line under the
-                composer counts anything that leaves the page after the checker is ready,
-                and it reads zero because there is nothing to send.
+                composer counts anything that leaves the page, and it reads zero.
               </ProseListItem>
               <ProseListItem>
                 <strong>Eight rules rather than eighty.</strong> Every additional rule
-                is additional surface for false positives, and false positives are what
-                get a tool like this switched off in the first week.
-              </ProseListItem>
-              <ProseListItem>
-                <strong>No holding anything back.</strong> It advises and never refuses.
-                The reviewed wording is offered first and a generated version second,
-                never preselected.
+                is surface for false positives, which get a tool switched off.
               </ProseListItem>
             </ProseList>
           </Prose>
@@ -385,10 +314,8 @@ export default function PressPage() {
               The rules, in full
             </ProseSectionHeading>
             <ProseP>
-              Eight rules ship in the demo. Six apply only when the recipient is outside
-              your company, which is what makes the recipient switch mean something. Tone
-              and language apply everywhere, because how a sentence lands does not depend
-              on the domain in the address.
+              Eight rules ship in the demo. Six apply only to external recipients.
+              Tone and language apply everywhere.
             </ProseP>
             <ProseFigure label="The eight rules, their severities and their scope">
               <RulesTable />
@@ -396,11 +323,9 @@ export default function PressPage() {
                 The table scrolls sideways here to reach scope and precision.
               </p>
               <ProseFigureNote>
-                No rule here has a published precision figure. Every rule is still tuned
-                by guesswork rather than by measurement, and none has been scored against
-                a held-out sample, so the honest entry is that it is not yet measured out
-                of sample. An in-sample number would look precise and would be the least
-                true thing on this site.
+                No rule here has a published precision figure. Every rule is tuned by
+                guesswork, not measurement, and none has been scored against a held-out
+                sample.
               </ProseFigureNote>
             </ProseFigure>
           </Prose>
@@ -413,27 +338,23 @@ export default function PressPage() {
               What comes next
             </ProseSectionHeading>
             <ProseSubheading>
-              The same checks inside the tools teams already use
+              The same checks inside tools teams already use
             </ProseSubheading>
             <ProseP>
-              The composer on this site is a demonstration. The intended form is a browser
-              extension, with the checker staying inside the extension and the draft never
-              leaving the page it was typed on.
+              The composer here is a demonstration. The intended form is a browser
+              extension.
             </ProseP>
             <ProseSubheading>
-              Policy authoring, with a precision harness in front of it
+              Policy authoring with a precision harness
             </ProseSubheading>
             <ProseP>
-              Writing a rule should not be the same act as switching it on. The next
-              version measures a candidate rule&rsquo;s false-positive rate against a
-              sample corpus before it can go live.
+              The next version measures a candidate rule&rsquo;s false-positive rate
+              against a sample corpus before it goes live.
             </ProseP>
-            <ProseSubheading>A distilled, task-specific classifier</ProseSubheading>
+            <ProseSubheading>A task-specific classifier</ProseSubheading>
             <ProseP>
               A smaller classifier trained for this exact task would be faster and more
-              accurate than similarity against examples. The gating requirement is a
-              human-adjudicated gold set drawn from real drafts, and that does not exist
-              on day one.
+              accurate than similarity against examples.
             </ProseP>
           </Prose>
         </Band>

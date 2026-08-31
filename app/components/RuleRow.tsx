@@ -38,19 +38,28 @@ const COPY = {
  * non-technical reader: "messages to people outside your company" rather than
  * "external-guest, external-domain".
  */
-function contextDescription(rule: PolicyRule): string {
+/**
+ * Where a rule applies, or `null` when it applies where nearly all of them do.
+ *
+ * Six of the eight rules are external-only, so this rendered the identical sentence
+ * "Messages to people outside your company" six times down one short page. That is
+ * the same repetition the whole prune was about, and six copies of one fact also make
+ * the two rules that genuinely differ harder to spot, not easier.
+ *
+ * So the default is stated ONCE above the list and this returns `null` for it. What
+ * survives per row is the exception, which is the only part carrying information.
+ */
+function contextDescription(rule: PolicyRule): string | null {
   const hasInternal = rule.appliesTo.includes("internal");
   const hasExternal =
     rule.appliesTo.includes("external-guest") || rule.appliesTo.includes("external-domain");
 
-  if (hasInternal && hasExternal) {
-    return "All messages";
-  } else if (hasExternal) {
-    return "Messages to people outside your company";
-  } else if (hasInternal) {
-    return "Internal team messages";
-  }
-  return "No contexts";
+  if (hasInternal && hasExternal) return "Also inside your team";
+  // The default, announced above the list rather than on every row.
+  if (hasExternal) return null;
+  if (hasInternal) return "Inside your team only";
+  // Unreachable with a well-formed rule, and silence would hide a broken one.
+  return "Applies nowhere";
 }
 
 /** Stable and URL-safe enough for a fragment. A personal id carries a colon. */
@@ -108,6 +117,8 @@ export function RuleRow({
 }: RuleRowProps) {
   const checkboxId = useId();
   const panelId = useId();
+  /** The heading's id, so the checkbox can be named by it instead of by a copy. */
+  const titleId = useId();
   const { match } = rule;
 
   return (
@@ -115,26 +126,46 @@ export function RuleRow({
       <div className="flex items-start gap-3">
         {/* Checkbox left of the title: a column of ticks reads as the answer to
             "what is switched on" without scanning across each row. */}
+        {/*
+          Named BY the visible title, rather than by a duplicate of it.
+
+          This carried its own `sr-only` label reading "Check drafts against: <title>"
+          beside an `h3` reading `<title>`. `sr-only` is clipped rather than
+          `display: none`, so the string was really there: a screen reader announced
+          every rule's title twice, and the page's measured text ran about 70 words
+          longer than what anyone could see. On a page whose whole complaint was
+          repetition, saying each of eight titles twice was the largest single source
+          of it.
+
+          `aria-labelledby` points at the heading, so there is ONE name and it cannot
+          drift from what is on screen. The "check drafts against" framing belongs to
+          the group once, not to each of eight rows.
+        */}
         <input
           type="checkbox"
           id={checkboxId}
           checked={enabled}
           onChange={(event) => onEnabledChange(rule.id, event.target.checked)}
+          aria-labelledby={titleId}
           className="mt-1 size-4 shrink-0 accent-accent"
         />
-        <label htmlFor={checkboxId} className="sr-only">
-          {COPY.enableLabel(rule.title)}
-        </label>
 
         {/* The default view: title, why, where it applies. All visible without
             expansion. The whole block is a column, not a disclosure button. */}
         <div className="min-w-0 flex-1">
           <div className="flex items-start gap-2">
-            <h3 className="flex-1 text-base font-medium text-ink">{rule.title}</h3>
+            <h3 id={titleId} className="flex-1 text-base font-medium text-ink">
+              {rule.title}
+            </h3>
             <SeverityChip severity={rule.severity} />
           </div>
           <p className="mt-1 text-sm text-ink-secondary">{rule.why}</p>
-          <p className="mt-1 text-xs text-ink-muted">{contextDescription(rule)}</p>
+          {/* Rendered only when this rule differs from the default stated above the
+              list, so a scan down the column shows exceptions rather than six copies
+              of the same sentence. */}
+          {contextDescription(rule) ? (
+            <p className="mt-1 text-xs text-ink-muted">{contextDescription(rule)}</p>
+          ) : null}
 
           {/* The disclosure control sits at the end, not wrapping the whole title.
               The visitor can read what the rule is about before deciding whether

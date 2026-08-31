@@ -34,20 +34,23 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { COMPANY_RULES } from "@/app/lib/policies";
 import { RuleRow, ruleRowId } from "@/app/components/RuleRow";
+import { Band } from "@/app/components/Band";
+import { SiteNav } from "@/app/components/SiteNav";
 
 /** Copy deck for the reframed settings page. */
 const COPY = {
-  backToProduct: "Second Thought",
   title: "Settings",
   subtitle:
-    "The things your company has a position on, across what you can promise, what you can share, and how you talk to people.",
+    "Read every rule and turn any off. Changes last until reload.",
 
   rulesHeading: "Rules",
   companyRules: "From your company",
   personalRules: "Your own rules",
   demoNote:
-    "In a company deployment an administrator would control these. In this demo " +
-    "you can switch them off.",
+    "In a company deployment an administrator controls these. Here you can switch them off.",
+
+  /** The scope six of the eight rules share, so no row has to repeat it. */
+  defaultScope: "These apply to messages leaving your company, unless a rule says otherwise.",
   noRules: "No rules are switched on.",
   switchedOn: (on: number, total: number) => `${on} of ${total} switched on`,
   reset: "Reset to defaults",
@@ -55,16 +58,14 @@ const COPY = {
 
   excludedHeading: "What the set does not look at",
   excluded:
-    "The rule set excludes pay, hours, working conditions, and organizing by " +
-    "construction. The tone and language rules also step aside on any sentence " +
-    "that discusses those subjects, so a conversation about them is never the " +
-    "thing a card is about.",
+    "The rule set excludes pay, hours, working conditions, and organizing by construction. " +
+    "Tone rules step aside on sentences discussing those subjects.",
 
-  roadmapHeading: "On the roadmap",
-  personalRoadmap:
-    "Writing your own rules, importing and exporting them, and remembering any " +
-    "of this between visits are on the roadmap. This version shows the set as " +
-    "shipped and lets you switch rules off for the session.",
+  roadmapNote:
+    "Writing rules, import/export, and persistence are on the roadmap. See ",
+
+  storageNote:
+    "This version stores nothing. Switches are in memory; the 22MB model is cached by your browser.",
 
   disclaimer:
     "Second Thought is a drafting aid. It does not provide legal or compliance advice and " +
@@ -177,88 +178,95 @@ export default function SettingsPage() {
   }, []);
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-app flex-col gap-6 px-4 py-6 sm:px-6 sm:py-10">
-      <header className="flex flex-col gap-2">
-        {/* Back to the product, first thing, because this page is a detour. */}
-        <Link href="/" className="w-fit text-sm">
-          {COPY.backToProduct}
-        </Link>
-        <h1 className="text-xl font-semibold tracking-tight text-ink">{COPY.title}</h1>
-        <p className="max-w-reading text-sm text-ink-secondary">{COPY.subtitle}</p>
-        <p className="max-w-reading text-sm text-ink-secondary">
-          This page exists so you can see exactly what is being checked and turn any of it
-          off. Being able to read and disable every rule is part of the commitment that this
-          tool works for you, not on you.
-        </p>
-      </header>
+    <>
+      <SiteNav current="settings" />
 
-      <main className="flex flex-col gap-10">
-        <Section id="rules" heading={COPY.rulesHeading}>
-          {/* The exclusion is stated before the list rather than under it. It is a
-              property of the set, and D23 is the reason the product is defensible. */}
-          <div className="flex flex-col gap-1">
-            <Eyebrow>{COPY.excludedHeading}</Eyebrow>
-            <p className="max-w-reading text-md text-ink-secondary">{COPY.excluded}</p>
-          </div>
+      {/* Band 1: paper - Title and intro */}
+      <Band tone="paper" as="section">
+        <header className="flex flex-col gap-3 py-6">
+          <h1 className="text-xl font-semibold tracking-tight text-ink">{COPY.title}</h1>
+          <p className="max-w-reading text-md text-ink-secondary">{COPY.subtitle}</p>
+        </header>
+      </Band>
 
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex flex-col gap-1">
-                <Eyebrow>{COPY.companyRules}</Eyebrow>
-                <p className="text-sm text-ink-secondary">
-                  {onCount === 0
-                    ? COPY.noRules
-                    : COPY.switchedOn(onCount, COMPANY_RULES.length)}
-                </p>
-              </div>
-              <div className="flex flex-col items-stretch gap-1 sm:items-end">
-                <button type="button" className={ACTION_CLASS} onClick={handleReset}>
-                  {COPY.reset}
-                </button>
-                <p className="text-2xs text-ink-muted">{COPY.resetNote}</p>
-              </div>
+      {/* Band 2: tint - Rules section */}
+      <Band tone="tint" as="main">
+        <div className="flex flex-col gap-6 py-rhythm-section">
+          <Section id="rules" heading={COPY.rulesHeading}>
+            {/* The exclusion is stated before the list rather than under it. It is a
+                property of the set, and D23 is the reason the product is defensible. */}
+            <div className="flex flex-col gap-1">
+              <Eyebrow>{COPY.excludedHeading}</Eyebrow>
+              <p className="max-w-reading text-md text-ink-secondary">{COPY.excluded}</p>
             </div>
 
-            <p className="max-w-reading text-sm text-ink-secondary">{COPY.demoNote}</p>
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-col gap-1">
+                  <Eyebrow>{COPY.companyRules}</Eyebrow>
+                  <p className="text-sm text-ink-secondary">
+                    {onCount === 0
+                      ? COPY.noRules
+                      : COPY.switchedOn(onCount, COMPANY_RULES.length)}
+                  </p>
+                </div>
+                <div className="flex flex-col items-stretch gap-1 sm:items-end">
+                  <button type="button" className={ACTION_CLASS} onClick={handleReset}>
+                    {COPY.reset}
+                  </button>
+                  <p className="text-2xs text-ink-muted">{COPY.resetNote}</p>
+                </div>
+              </div>
 
-            <ul className={PANEL}>
-              {COMPANY_RULES.map((rule) => (
-                <RuleRow
-                  key={rule.id}
-                  rule={rule}
-                  enabled={enabled[rule.id] ?? rule.enabled}
-                  expanded={expanded.has(rule.id)}
-                  onEnabledChange={handleEnabledChange}
-                  onExpandedChange={handleExpandedChange}
-                />
-              ))}
-            </ul>
-          </div>
+              <p className="max-w-reading text-sm text-ink-secondary">{COPY.demoNote}</p>
 
+              {/* The default scope, said once. Six of the eight rules are external
+                  only, and each row used to repeat that sentence for itself. Stating
+                  it here lets a row stay silent unless it differs, so the two rules
+                  that also apply inside the team are the ones that stand out. */}
+              <p className="max-w-reading text-sm text-ink-secondary">
+                {COPY.defaultScope}
+              </p>
+
+              <ul className={PANEL}>
+                {COMPANY_RULES.map((rule) => (
+                  <RuleRow
+                    key={rule.id}
+                    rule={rule}
+                    enabled={enabled[rule.id] ?? rule.enabled}
+                    expanded={expanded.has(rule.id)}
+                    onEnabledChange={handleEnabledChange}
+                    onExpandedChange={handleExpandedChange}
+                  />
+                ))}
+              </ul>
+            </div>
+          </Section>
+        </div>
+      </Band>
+
+      {/* Band 3: paper - Personal rules and roadmap */}
+      <Band tone="paper" as="section">
+        <div className="flex flex-col gap-4 py-rhythm-section">
           <div className="flex flex-col gap-1">
             <Eyebrow>{COPY.personalRules}</Eyebrow>
             <p className="max-w-reading text-sm text-ink-secondary">
-              {COPY.personalRoadmap}
+              {COPY.roadmapNote}
+              <Link href="/roadmap" className="font-medium text-accent hover:underline">
+                Roadmap
+              </Link>
+              .
             </p>
           </div>
 
-          <p className="mt-6 text-sm text-ink-secondary">
-            For model details and what downloads, see{" "}
-            <Link href="/roadmap" className="font-medium text-accent hover:underline">
-              Roadmap
-            </Link>
-            . For privacy and storage, see{" "}
-            <Link href="/privacy" className="font-medium text-accent hover:underline">
-              Privacy
-            </Link>
-            .
-          </p>
-        </Section>
-      </main>
+          <div className="flex flex-col gap-1">
+            <Eyebrow>Storage</Eyebrow>
+            <p className="max-w-reading text-sm text-ink-secondary">{COPY.storageNote}</p>
+          </div>
 
-      <footer className="mt-auto border-t border-hairline pt-4 text-xs text-ink-muted">
-        <p className="max-w-reading">{COPY.disclaimer}</p>
-      </footer>
-    </div>
+          <p className="mt-4 text-xs text-ink-muted">{COPY.disclaimer}</p>
+        </div>
+      </Band>
+    </>
   );
 }

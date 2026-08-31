@@ -6,9 +6,9 @@
  * technical vocabulary is permitted: it exists for the reader who wants proof.
  *
  * Three sections, alternating Band tones:
- * 1. What downloads (the three tiers) - paper
- * 2. Model details - tint
- * 3. Current status - paper
+ * 1. Current status - paper
+ * 2. What downloads (the two tiers) - tint
+ * 3. Model details - paper
  *
  * All values read from code rather than being retyped, so the page cannot
  * drift from what actually runs.
@@ -26,23 +26,19 @@ import {
 /** Copy deck for the roadmap page. */
 const COPY = {
   title: "Roadmap",
-  subtitle:
-    "What downloads, model details, and current status. " +
-    "What ships today and what is still being built.",
+  subtitle: "Status, capabilities, and technical detail.",
+
+  statusHeading: "Current status",
+  statusLead: "What works today and what is still being built.",
 
   tiersHeading: "What downloads",
   tiersLead:
-    "Capability arrives in tiers, and the page does real work before any " +
-    "model exists. Sizes are stated before anything downloads.",
+    "Two downloads, both cached in this browser. Sizes shown before anything loads.",
 
   modelHeading: "Model details",
   modelLead:
-    "The model used for wording checks. Product names are trademarks of " +
+    "The model that powers the wording checks. Product names are trademarks of " +
     "their respective owners and are used here only to identify those products.",
-
-  statusHeading: "Current status",
-  statusLead:
-    "An honest accounting of what ships today and what is still being built.",
 
   disclaimer:
     "Second Thought is a drafting aid. It does not provide legal or " +
@@ -50,29 +46,19 @@ const COPY = {
     "regulation, or company policy.",
 } as const;
 
-/** The three tiers from the original settings page. */
+/** The two tiers that download today. */
 const TIERS: readonly { name: string; size: string; detail: string }[] = [
   {
     name: "The page itself",
     size: "~150KB",
-    detail:
-      "Arrives immediately. Pattern checks are already running: secrets, " +
-      "personal-data shapes, and term lists.",
+    detail: "Pattern checks run immediately: secrets, personal data, term lists.",
   },
   {
     name: "Wording checks",
     size: "~22MB",
     detail:
-      "Wording checks need a one-time 22MB download. It happens once and " +
-      "stays in this browser's cache, which is why nothing you type has to " +
-      "leave your machine.",
-  },
-  {
-    name: "Rewrite in your voice",
-    size: "~280MB",
-    detail:
-      "Also suggest wording in your own voice · one-time 280MB download · " +
-      "runs on your device. Only if you ask for it.",
+      "Semantic similarity against rule exemplars. One-time download, " +
+      "cached in this browser.",
   },
 ];
 
@@ -101,39 +87,39 @@ const FEATURES: readonly Feature[] = [
   {
     name: "Context gate",
     state: "shipped",
-    note: "External vs internal recipient detection",
+    note: "Detects external vs internal recipients",
   },
   {
     name: "Deterministic stage",
     state: "shipped",
-    note: "Pattern checks for secrets, personal data, and term lists",
+    note: "Patterns for secrets, personal data, term lists",
   },
   {
-    name: "Meaning-based stage",
+    name: "Wording checks",
     state: "shipped",
-    note: "Semantic similarity checks against rule exemplars",
+    note: "Semantic similarity against rule exemplars",
   },
   {
     name: "Similarity bars",
     state: "placeholder",
     note:
-      "Every rule sits at the same untuned value. No accuracy figure " +
-      "exists and none is published.",
+      "Every rule sits at the same untuned value. No accuracy measured or published.",
   },
   {
     name: "Browser extension",
     state: "not-built",
-    note: "The intended form for live drafting surfaces",
+    note: "The intended form for live drafting",
   },
   {
-    name: "Rule authoring",
+    name: "Rule authoring and import/export",
     state: "not-built",
-    note: "Write and import/export your own rules",
   },
   {
-    name: "Generated rewrites",
+    name: "Rewrite in your own voice",
     state: "not-built",
-    note: "Rewrites in the user's own words. The seam exists.",
+    note:
+      "Generate rewrites in the writer's own words, not the rule's fixed " +
+      "replacement. Needs a generative model. The seam exists in code.",
   },
 ];
 
@@ -178,65 +164,7 @@ export default function RoadmapPage() {
         </header>
 
         <main className="flex flex-1 flex-col">
-          {/* Section 1: What downloads - paper tone */}
-          <Band tone="paper" as="section" aria-labelledby="tiers">
-            <h2
-              id="tiers"
-              className="text-lg font-semibold tracking-tight text-ink"
-            >
-              {COPY.tiersHeading}
-            </h2>
-            <p className="mt-2 max-w-reading text-md text-ink-secondary">
-              {COPY.tiersLead}
-            </p>
-
-            <ul className="mt-6 divide-y divide-hairline rounded-lg border border-hairline bg-surface">
-              {TIERS.map((tier) => (
-                <li key={tier.name} className="flex flex-col gap-1 px-4 py-3 sm:px-5">
-                  <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <span className="text-base font-medium text-ink">
-                      {tier.name}
-                    </span>
-                    <span className="font-mono text-xs text-ink-secondary">
-                      {tier.size}
-                    </span>
-                  </div>
-                  <p className="max-w-reading text-sm text-ink-secondary">
-                    {tier.detail}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          </Band>
-
-          {/* Section 2: Model details - tint tone */}
-          <Band tone="tint" as="section" aria-labelledby="model">
-            <h2
-              id="model"
-              className="text-lg font-semibold tracking-tight text-ink"
-            >
-              {COPY.modelHeading}
-            </h2>
-            <p className="mt-2 max-w-reading text-md text-ink-secondary">
-              {COPY.modelLead}
-            </p>
-
-            <dl className="mt-6 divide-y divide-hairline rounded-lg border border-hairline bg-surface">
-              {MODEL_SPECS.map((spec) => (
-                <div
-                  key={spec.label}
-                  className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-4 py-3 sm:px-5"
-                >
-                  <dt className="text-sm font-medium text-ink">{spec.label}</dt>
-                  <dd className="font-mono text-sm text-ink-secondary">
-                    {spec.value}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </Band>
-
-          {/* Section 3: Current status - paper tone */}
+          {/* Section 1: Current status - paper tone */}
           <Band tone="paper" as="section" aria-labelledby="status">
             <h2
               id="status"
@@ -268,6 +196,64 @@ export default function RoadmapPage() {
                 </li>
               ))}
             </ul>
+          </Band>
+
+          {/* Section 2: What downloads - tint tone */}
+          <Band tone="tint" as="section" aria-labelledby="tiers">
+            <h2
+              id="tiers"
+              className="text-lg font-semibold tracking-tight text-ink"
+            >
+              {COPY.tiersHeading}
+            </h2>
+            <p className="mt-2 max-w-reading text-md text-ink-secondary">
+              {COPY.tiersLead}
+            </p>
+
+            <ul className="mt-6 divide-y divide-hairline rounded-lg border border-hairline bg-surface">
+              {TIERS.map((tier) => (
+                <li key={tier.name} className="flex flex-col gap-1 px-4 py-3 sm:px-5">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <span className="text-base font-medium text-ink">
+                      {tier.name}
+                    </span>
+                    <span className="font-mono text-xs text-ink-secondary">
+                      {tier.size}
+                    </span>
+                  </div>
+                  <p className="max-w-reading text-sm text-ink-secondary">
+                    {tier.detail}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </Band>
+
+          {/* Section 3: Model details - paper tone */}
+          <Band tone="paper" as="section" aria-labelledby="model">
+            <h2
+              id="model"
+              className="text-lg font-semibold tracking-tight text-ink"
+            >
+              {COPY.modelHeading}
+            </h2>
+            <p className="mt-2 max-w-reading text-md text-ink-secondary">
+              {COPY.modelLead}
+            </p>
+
+            <dl className="mt-6 divide-y divide-hairline rounded-lg border border-hairline bg-surface">
+              {MODEL_SPECS.map((spec) => (
+                <div
+                  key={spec.label}
+                  className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-4 py-3 sm:px-5"
+                >
+                  <dt className="text-sm font-medium text-ink">{spec.label}</dt>
+                  <dd className="font-mono text-sm text-ink-secondary">
+                    {spec.value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
           </Band>
         </main>
 

@@ -88,12 +88,11 @@ describe("press: band alternation", () => {
   it("has section headings for each major section", () => {
     const found = headings(markup());
 
-    // At least 7 major sections after the title
-    expect(found.length).toBeGreaterThanOrEqual(7);
+    // At least 5 major sections after the title
+    expect(found.length).toBeGreaterThanOrEqual(5);
 
     // Key sections must exist
     const ids = found.map((h) => h.id);
-    expect(ids).toContain("the-gap-heading");
     expect(ids).toContain("how-it-works-heading");
     expect(ids).toContain("why-local-heading");
     expect(ids).toContain("the-rules-heading");

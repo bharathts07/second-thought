@@ -369,6 +369,8 @@
     text-size-adjust: 100%;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Pinned nav: prevent anchor targets from hiding beneath the top bar. */
+    scroll-padding-top: 60px;
   }
 
   body {

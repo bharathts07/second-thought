@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { SiteNav } from "./SiteNav";
 
 describe("SiteNav", () => {
-  it("renders all six destinations", () => {
+  it("renders all five destinations", () => {
     const html = renderToStaticMarkup(<SiteNav current="home" />);
 
     // Wordmark
@@ -15,8 +15,6 @@ describe("SiteNav", () => {
     expect(html).toContain('href="/press"');
     expect(html).toContain("Roadmap");
     expect(html).toContain('href="/roadmap"');
-    expect(html).toContain("Privacy");
-    expect(html).toContain('href="/privacy"');
     expect(html).toContain("Settings");
     expect(html).toContain('href="/settings"');
     expect(html).toContain("GitHub");
@@ -58,16 +56,6 @@ describe("SiteNav", () => {
     expect(roadmapSection).toContain('aria-current="page"');
   });
 
-  it("marks the privacy page as current", () => {
-    const html = renderToStaticMarkup(<SiteNav current="privacy" />);
-
-    const privacySection = html.substring(
-      html.indexOf('href="/privacy"') - 200,
-      html.indexOf('href="/privacy"') + 200
-    );
-    expect(privacySection).toContain('aria-current="page"');
-  });
-
   it("marks the settings page as current", () => {
     const html = renderToStaticMarkup(<SiteNav current="settings" />);
 
@@ -101,47 +89,11 @@ describe("SiteNav", () => {
     expect(githubSection).not.toContain("aria-current");
   });
 
-  it("includes exactly one svg in the nav (the gear icon)", () => {
+  it("has no svg elements in the nav", () => {
     const html = renderToStaticMarkup(<SiteNav current="home" />);
 
     const svgMatches = html.match(/<svg/g);
-    expect(svgMatches).toHaveLength(1);
-  });
-
-  it("marks the gear icon as aria-hidden", () => {
-    const html = renderToStaticMarkup(<SiteNav current="settings" />);
-
-    expect(html).toContain("<svg");
-    expect(html).toContain('aria-hidden="true"');
-  });
-
-  it("renders the gear icon before the Settings label", () => {
-    const html = renderToStaticMarkup(<SiteNav current="settings" />);
-
-    const settingsLinkStart = html.indexOf('href="/settings"');
-    const svgPosition = html.indexOf("<svg");
-    const settingsTextPosition = html.indexOf("Settings", settingsLinkStart);
-
-    expect(svgPosition).toBeGreaterThan(settingsLinkStart);
-    expect(svgPosition).toBeLessThan(settingsTextPosition);
-  });
-
-  it("applies currentColor to the gear icon", () => {
-    const html = renderToStaticMarkup(<SiteNav current="home" />);
-
-    expect(html).toContain('stroke="currentColor"');
-  });
-
-  it("uses hairline stroke (1px) on the gear icon", () => {
-    const html = renderToStaticMarkup(<SiteNav current="home" />);
-
-    expect(html).toContain('stroke-width="1"');
-  });
-
-  it("has no fill on the gear icon", () => {
-    const html = renderToStaticMarkup(<SiteNav current="home" />);
-
-    expect(html).toContain('fill="none"');
+    expect(svgMatches).toBeNull();
   });
 
   it("GitHub link opens in a new tab with security attributes", () => {

@@ -7,9 +7,7 @@ import type { ReactNode } from "react";
  */
 export const metadata: Metadata = {
   title: "Second Thought · Roadmap",
-  description:
-    "What downloads, model details, and current status. " +
-    "What ships today and what is still being built.",
+  description: "Status, capabilities, and technical detail.",
 };
 
 export default function RoadmapLayout({ children }: { children: ReactNode }) {
