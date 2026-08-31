@@ -8,7 +8,7 @@ import type { ReactNode } from "react";
  * route to anyone with several tabs open.
  */
 export const metadata: Metadata = {
-  title: "Second Thought · Rules",
+  title: "Second Thought · Settings",
   description:
     "Every rule this check applies, covering what you can promise, what you can share, and how you talk to people. Read and disable any of them.",
 };

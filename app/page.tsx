@@ -683,8 +683,22 @@ export default function Home() {
     </>
   );
 
+  /**
+   * FULL WIDTH, and deliberately carrying no measure or padding of its own.
+   *
+   * This wrapper used to be `mx-auto max-w-app px-4`, which was right when the page
+   * was one column on one background. With banded sections it is actively wrong: a
+   * `Band` paints its background on its outer element and centres its own content, so
+   * a constrained parent clips the paint. Measured at 1280, every band ran x=193 to
+   * x=1073 instead of edge to edge, and because the page background is slightly DARKER
+   * than the paper band, the whole site read as one big inset card floating on a
+   * darker field. That is the boxed-in look widening the measure was meant to remove,
+   * reintroduced by a container nobody thought to delete.
+   *
+   * Each band owns its own centring now. Nothing above them may constrain width.
+   */
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-app flex-col px-4 sm:px-6">
+    <div className="flex min-h-dvh w-full flex-col">
       <Landing demoSlot={demoSlot} />
     </div>
   );

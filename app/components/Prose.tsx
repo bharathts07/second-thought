@@ -92,56 +92,26 @@ export function ProseLead({ children }: { children: ReactNode }) {
 }
 
 /**
- * A numbered section.
+ * A section heading for banded layouts.
  *
- * The numeral is the ONE thing Marginalia allows to be visually large. It is
- * deliberate editorial furniture: on a page this long it gives the reader a sense
- * of position, and it lets the sections carry short titles. The numeral sits
- * large (24px) with a hairline margin rule underneath, making the section break
- * an unmistakable editorial device rather than an incidental label.
- *
- * `gap-5` is the paragraph rhythm for everything inside. Vertical spacing above
- * the section now varies per caller to give the page rhythm.
+ * Replaces the numbered ProseSection. With bands providing the visual rhythm,
+ * the section heading is just the heading itself, no numeral or decorative rule.
+ * The Band component handles spacing and background color.
  */
-export function ProseSection({
-  index,
-  title,
-  id,
+export function ProseSectionHeading({
   children,
-  spaceAbove = "default",
+  id,
 }: {
-  index: string;
-  title: string;
-  id: string;
   children: ReactNode;
-  /** Controls the margin above this section for varied rhythm. */
-  spaceAbove?: "default" | "large" | "extra";
+  id: string;
 }) {
-  const marginClass = {
-    default: "mt-10",
-    large: "mt-12",
-    extra: "mt-16",
-  }[spaceAbove];
-
   return (
-    <section aria-labelledby={id} className={`${marginClass} flex flex-col gap-5`}>
-      <div className="flex flex-col gap-3">
-        {/* The numeral as editorial furniture: large, with a margin rule. */}
-        <div className="flex flex-col gap-2">
-          <p className="font-ui text-xl font-semibold tracking-tight text-ink-secondary tabular-nums">
-            {index}
-          </p>
-          <div className="h-px w-12 bg-hairline" aria-hidden="true" />
-        </div>
-        <h2
-          id={id}
-          className={`${MEASURE} text-xl font-semibold tracking-tight text-ink`}
-        >
-          {title}
-        </h2>
-      </div>
+    <h2
+      id={id}
+      className={`${MEASURE} mb-5 text-xl font-semibold tracking-tight text-ink`}
+    >
       {children}
-    </section>
+    </h2>
   );
 }
 

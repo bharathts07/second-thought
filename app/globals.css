@@ -86,6 +86,7 @@
    * the one place a semantic token name and a readable utility name disagree. */
   --color-canvas: var(--canvas);
   --color-surface: var(--surface);
+  --color-tint: var(--surface-tint);
   --color-raised: var(--surface-raised);
   --color-sunken: var(--surface-sunken);
   --color-ink: var(--text-primary);

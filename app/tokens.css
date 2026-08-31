@@ -364,9 +364,23 @@
    * Chroma sits between 0.004 and 0.009 across the whole neutral ramp: enough
    * that a screenshot next to a cool-grey competitor looks like paper, little
    * enough that nothing reads as tinted on its own.
+   *
+   * --surface-tint: paper carrying a faint wash of the blue accent at very low
+   * chroma. Used for alternating full-bleed bands on landing pages. Measured
+   * contrast ratios (light only, dark untuned):
+   *   --text-primary on tint:   14.54:1
+   *   --text-secondary on tint:  7.75:1
+   *   --text-muted on tint:      5.26:1
+   *   --border-subtle on tint:   1.81:1
+   *   --border-strong on tint:   1.45:1
+   *   --accent on tint:          5.15:1
+   * Tint vs paper side-by-side is distinguishable (1.07:1) but reads as one
+   * system, not two products. The blue accent still reads as accent on tint and
+   * does not vanish into it.
    */
   --canvas: light-dark(oklch(0.96 0.008 75), oklch(0.18 0.008 70));
   --surface: light-dark(oklch(0.985 0.005 80), oklch(0.222 0.008 70));
+  --surface-tint: light-dark(oklch(0.965 0.012 250), oklch(0.222 0.008 70));
   --surface-raised: light-dark(oklch(0.995 0.004 80), oklch(0.262 0.009 70));
   --surface-sunken: light-dark(oklch(0.932 0.009 75), oklch(0.152 0.006 70));
 
@@ -533,15 +547,16 @@
  * `only`, which resolves every `light-dark()` above and also fixes native
  * controls, scrollbars and form widgets to match.
  *
- * The default is `light dark` in that order, which is the light-first decision
- * expressed in one place: a browser with no preference gets the bright-office
- * scheme, because that is where this work actually happens.
+ * LIGHT IS PINNED AS THE SHIPPED SCHEME. Dark was never tuned, and shipping a
+ * theme nobody has looked at is worse than shipping one theme. The 31
+ * `light-dark()` pairs remain in this file as the starting point for a future
+ * dark pass, but no visitor gets an untuned scheme.
  *
  * Components must not use Tailwind's `dark:` variant: it reads
  * `prefers-color-scheme` directly and would disagree with a pinned theme.
  */
 :root {
-  color-scheme: light dark;
+  color-scheme: only light;
 }
 
 :root[data-theme="light"] {

@@ -39,6 +39,8 @@ import type { ReactNode } from "react";
 import { COMPANY_RULES } from "@/app/lib/policies";
 import type { PolicyRule } from "@/app/lib/types";
 import { SeverityChip } from "@/app/components/SeverityChip";
+import { SiteNav } from "@/app/components/SiteNav";
+import { Band } from "@/app/components/Band";
 import {
   Prose,
   ProseCallout,
@@ -49,7 +51,7 @@ import {
   ProseList,
   ProseListItem,
   ProseP,
-  ProseSection,
+  ProseSectionHeading,
   ProseSubheading,
   ProseTitle,
 } from "@/app/components/Prose";
@@ -69,7 +71,7 @@ const COPY = {
 } as const;
 
 export const metadata: Metadata = {
-  title: "Second Thought · Press",
+  title: "Second Thought · Announcement",
   description: COPY.subtitle,
 };
 
@@ -169,100 +171,87 @@ function RulesTable() {
   );
 }
 
-function PressHeader() {
-  return (
-    <header className="border-b border-hairline">
-      <div className="mx-auto flex w-full max-w-app items-baseline justify-between gap-4 px-4 py-4 sm:px-6">
-        <Link href="/" className="text-sm font-semibold tracking-tight text-ink">
-          {COPY.title}
-        </Link>
-        <nav aria-label="Site" className="flex items-baseline gap-5 text-sm">
-          <Link href="/" className="hover:underline">
-            The product
-          </Link>
-          <a href={GITHUB_URL} rel="noreferrer" className="hover:underline">
-            GitHub
-          </a>
-        </nav>
-      </div>
-    </header>
-  );
-}
 
 export default function PressPage() {
   return (
     <div className="min-h-screen">
-      <PressHeader />
+      <SiteNav current="announcement" />
 
-      <main className="mx-auto w-full max-w-app px-4 pt-10 pb-16 sm:px-6 sm:pt-16">
-        <Prose>
-          <div className="flex flex-col gap-4">
-            <ProseEyebrow>Press release</ProseEyebrow>
-            <ProseTitle>
-              Stay inside your company&rsquo;s rules, before you hit send.
-            </ProseTitle>
-            <ProseLead>
-              Your company has rules about what you can promise, what you can share,
-              and how you talk to people. When you are busy and someone is waiting,
-              they are easy to cross without noticing. Second Thought reads your draft
-              on your own computer, points out the line that could cause trouble, and
-              offers a safer way to say it.
-            </ProseLead>
-          </div>
+      <main>
+        <Band tone="paper" as="div">
+          <Prose>
+            <div className="flex flex-col gap-4">
+              <ProseEyebrow>Announcement</ProseEyebrow>
+              <ProseTitle>
+                Stay inside your company&rsquo;s rules, before you hit send.
+              </ProseTitle>
+              <ProseLead>
+                Your company has rules about what you can promise, what you can share,
+                and how you talk to people. When you are busy and someone is waiting,
+                they are easy to cross without noticing. Second Thought reads your draft
+                on your own computer, points out the line that could cause trouble, and
+                offers a safer way to say it.
+              </ProseLead>
+            </div>
 
-          {/* The ceiling before any capability claim (`content-safety.md` §5).
-              Putting it here rather than in a footnote is the whole argument of
-              the product applied to the product's own marketing. */}
-          <div className="mt-8">
-            <ProseCallout>
-              <p className="font-ui text-sm">
-                What it does not do, first. It advises and never stops a send. It
-                is bypassable, by design and in one click. It runs on one surface,
-                it works in English only, and its eight rules are a demonstration
-                of the idea rather than a compliance programme.
-              </p>
-            </ProseCallout>
-          </div>
+            {/* The ceiling before any capability claim (`content-safety.md` §5).
+                Putting it here rather than in a footnote is the whole argument of
+                the product applied to the product's own marketing. */}
+            <div className="mt-8">
+              <ProseCallout>
+                <p className="font-ui text-sm">
+                  What it does not do, first. It advises and never stops a send. It
+                  is bypassable, by design and in one click. It runs on one surface,
+                  it works in English only, and its eight rules are a demonstration
+                  of the idea rather than a compliance programme.
+                </p>
+              </ProseCallout>
+            </div>
 
-          {/* Clear, unmissable way back to the working product. A reader who
-              arrives here first and is convinced must not hunt for it. */}
-          <div className="mt-8 flex justify-center">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 rounded-lg border border-edge bg-surface px-6 py-3 font-ui text-sm font-medium text-ink transition-colors hover:bg-sunken focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-            >
-              Try it in this browser
-              <span aria-hidden="true" className="text-ink-secondary">→</span>
-            </Link>
-          </div>
+            {/* Clear, unmissable way back to the working product. A reader who
+                arrives here first and is convinced must not hunt for it. */}
+            <div className="mt-8 flex justify-center">
+              <Link
+                href="/"
+                className="inline-flex items-center gap-2 rounded-lg border border-edge bg-surface px-6 py-3 font-ui text-sm font-medium text-ink transition-colors hover:bg-sunken focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+              >
+                Try it in this browser
+                <span aria-hidden="true" className="text-ink-secondary">→</span>
+              </Link>
+            </div>
+          </Prose>
+        </Band>
 
-          <ProseSection index="01" id="the-gap" title="The gap is not the rule, it&rsquo;s the moment" spaceAbove="default">
+
+        <Band tone="tint" as="section" id="the-gap" aria-labelledby="the-gap-heading">
+          <Prose>
+            <ProseSectionHeading id="the-gap-heading">
+              The gap is not the rule, it&rsquo;s the moment
+            </ProseSectionHeading>
             <ProseP>
               Your company has rules about what you can promise, what data you can
-              share, how to talk about delivery dates and pricing. A compliance officer
-              somewhere has written the exact wording you should use when a customer
-              asks whether their data stays in one region. That wording is in a policy
-              PDF or an internal wiki. The person typing the reply has four minutes
-              before their next meeting. They are not going to open a policy document
-              and search for the relevant section.
+              share, how to talk about delivery dates and pricing. That wording is in
+              a policy PDF or an internal wiki. The person typing the reply has four
+              minutes before their next meeting and is not going to open a policy
+              document.
             </ProseP>
             <ProseP>
-              Nobody sets out to break the rule. Someone is answering a customer who is
-              waiting, and they type one sentence more confident than the company can
-              stand behind. That sentence becomes evidence when the relationship breaks
-              down. Regulators have issued fines totalling over $3B since 2021 over how
-              business communications were kept and supervised, and most of what sits
-              behind that figure was not anyone being dishonest. The gap is not that the
+              Nobody sets out to break the rule, but someone answering a waiting
+              customer types one sentence more confident than the company can stand
+              behind. That sentence becomes evidence when the relationship breaks down.
+              Regulators have issued fines totalling over $3B since 2021 over how
+              business communications were kept and supervised. The gap is not that the
               rule does not exist. The gap is that it exists in the wrong place.
             </ProseP>
-          </ProseSection>
+          </Prose>
+        </Band>
 
-          <ProseSection
-            index="02"
-            id="the-moment"
-            title="Put the rule where you are typing"
-            spaceAbove="large"
-          >
+
+        <Band tone="paper" as="section" id="the-moment" aria-labelledby="the-moment-heading">
+          <Prose>
+            <ProseSectionHeading id="the-moment-heading">
+              Put the rule where you are typing
+            </ProseSectionHeading>
             <ProseP>
               The useful moment is before the message leaves. Second Thought sits under
               the composer and says nothing until a sentence is worth reconsidering. When
@@ -271,19 +260,24 @@ export default function PressPage() {
               leave alone. Nothing is held back from sending.
             </ProseP>
             <ProseP>
-              The checking happens on your own machine. There is no version of this where
-              someone reads your drafts. That is not a promise to trust; it is a property
-              of how it is built. The checks run inside your browser. There is no server
-              that could receive what you type.
+              The checking happens on your own machine. That is not a promise to trust;
+              it is a property of how it is built. The checks run inside your browser.
+              There is no server that could receive what you type.
             </ProseP>
             <ProseP>
-              The gesture that explains it takes two seconds: switch the recipient from
-              your own team to a customer, leave the draft as it is, and watch what it
-              flags change. <TextLink href="/">Try it in this browser</TextLink>.
+              Switch the recipient from your own team to a customer, leave the draft as
+              it is, and watch what it flags change.{" "}
+              <TextLink href="/">Try it in this browser</TextLink>.
             </ProseP>
-          </ProseSection>
+          </Prose>
+        </Band>
 
-          <ProseSection index="03" id="how-it-works" title="How it works" spaceAbove="extra">
+
+        <Band tone="tint" as="section" id="how-it-works" aria-labelledby="how-it-works-heading">
+          <Prose>
+            <ProseSectionHeading id="how-it-works-heading">
+              How it works
+            </ProseSectionHeading>
             <ProseP>
               The checker runs inside your browser tab. The first time you visit, it
               downloads once and stays in your browser cache. After that, every check
@@ -306,18 +300,19 @@ export default function PressPage() {
               <span className="font-ui tabular-nums">0.964</span>. Similarity alone would
               put a card under the most careful sentence in the draft.
             </ProseP>
-          </ProseSection>
+          </Prose>
+        </Band>
 
-          <ProseSection
-            index="04"
-            id="why-local"
-            title="Why it runs on your machine"
-            spaceAbove="large"
-          >
+
+        <Band tone="paper" as="section" id="why-local" aria-labelledby="why-local-heading">
+          <Prose>
+            <ProseSectionHeading id="why-local-heading">
+              Why it runs on your machine
+            </ProseSectionHeading>
             <ProseP>
-              This is a design constraint rather than a feature added later. The reasoning
-              below is about why this product is built this way. None of it is a claim
-              about anyone else&rsquo;s software, and none of it is legal advice.
+              This is a design constraint, not a feature added later. The reasoning below
+              is about why this product is built this way. None of it is a claim about
+              anyone else&rsquo;s software, and none of it is legal advice.
             </ProseP>
             <ProseP>
               Section 7 of the NLRA protects most private-sector employees discussing pay
@@ -345,18 +340,19 @@ export default function PressPage() {
               </p>
             </ProseCallout>
             <ProseP>
-              None of that is a policy you have to take on trust. The site is a set of
-              static files, its content security policy permits connections to this origin
-              and nowhere else, and the network tab is the entire audit.
+              The site is a set of static files, its content security policy permits
+              connections to this origin and nowhere else, and the network tab is the
+              entire audit.
             </ProseP>
-          </ProseSection>
+          </Prose>
+        </Band>
 
-          <ProseSection
-            index="05"
-            id="not-built"
-            title="What is deliberately not built"
-            spaceAbove="default"
-          >
+
+        <Band tone="tint" as="section" id="not-built" aria-labelledby="not-built-heading">
+          <Prose>
+            <ProseSectionHeading id="not-built-heading">
+              What is deliberately not built
+            </ProseSectionHeading>
             <ProseList>
               <ProseListItem>
                 <strong>No console.</strong> There is no view where anyone could read
@@ -379,9 +375,15 @@ export default function PressPage() {
                 never preselected.
               </ProseListItem>
             </ProseList>
-          </ProseSection>
+          </Prose>
+        </Band>
 
-          <ProseSection index="06" id="the-rules" title="The rules, in full" spaceAbove="extra">
+
+        <Band tone="paper" as="section" id="the-rules" aria-labelledby="the-rules-heading">
+          <Prose>
+            <ProseSectionHeading id="the-rules-heading">
+              The rules, in full
+            </ProseSectionHeading>
             <ProseP>
               Eight rules ship in the demo. Six apply only when the recipient is outside
               your company, which is what makes the recipient switch mean something. Tone
@@ -401,19 +403,22 @@ export default function PressPage() {
                 true thing on this site.
               </ProseFigureNote>
             </ProseFigure>
-          </ProseSection>
+          </Prose>
+        </Band>
 
-          <ProseSection index="07" id="roadmap" title="What comes next" spaceAbove="large">
+
+        <Band tone="tint" as="section" id="roadmap" aria-labelledby="roadmap-heading">
+          <Prose>
+            <ProseSectionHeading id="roadmap-heading">
+              What comes next
+            </ProseSectionHeading>
             <ProseSubheading>
               The same checks inside the tools teams already use
             </ProseSubheading>
             <ProseP>
               The composer on this site is a demonstration. The intended form is a browser
               extension, with the checker staying inside the extension and the draft never
-              leaving the page it was typed on. That layer advises and is bypassable.
-              Going from advice to enforcement would mean a managed-browser integration
-              rather than a content script, and we would only build that for someone who
-              asked for enforcement rather than coaching.
+              leaving the page it was typed on.
             </ProseP>
             <ProseSubheading>
               Policy authoring, with a precision harness in front of it
@@ -426,20 +431,24 @@ export default function PressPage() {
             <ProseSubheading>A distilled, task-specific classifier</ProseSubheading>
             <ProseP>
               A smaller classifier trained for this exact task would be faster and more
-              accurate than similarity against examples. It is not in this version for a
-              plain reason: training only on synthetic data bakes in the trainer&rsquo;s
-              blind spots, and offline evaluation then flatters you because the test set
-              is synthetic too. The gating requirement is a human-adjudicated gold set
-              drawn from real drafts, and that does not exist on day one.
+              accurate than similarity against examples. The gating requirement is a
+              human-adjudicated gold set drawn from real drafts, and that does not exist
+              on day one.
             </ProseP>
-          </ProseSection>
+          </Prose>
+        </Band>
 
-          <ProseSection index="08" id="disclaimer" title="One last thing" spaceAbove="large">
+
+        <Band tone="paper" as="section" id="disclaimer" aria-labelledby="disclaimer-heading">
+          <Prose>
+            <ProseSectionHeading id="disclaimer-heading">
+              One last thing
+            </ProseSectionHeading>
             <ProseCallout tone="quiet">
               <p className="font-ui text-sm">{COPY.disclaimer}</p>
             </ProseCallout>
-          </ProseSection>
-        </Prose>
+          </Prose>
+        </Band>
       </main>
 
       <footer className="border-t border-hairline">

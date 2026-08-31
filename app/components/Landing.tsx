@@ -1,10 +1,10 @@
 /**
  * The landing page above the seam: introduction to the product for a new visitor.
  *
- * Six parts, in order: hero, 01 (nobody sets out to break a rule), 02 (it works for
- * you, not on you), 03 (a note in the margin), 04 (the demo, the seam itself), and
- * 05 (you do not have to take our word for it). The hero carries no numeral;
- * editorial sections are 01 to 05.
+ * Six alternating full-bleed bands: hero, nobody sets out to break a rule, it works
+ * for you not on you, a note in the margin, the demo (the seam itself), and you do
+ * not have to take our word for it. The bands alternate tone="paper" and tone="tint"
+ * down the page.
  *
  * **Brand register above the seam, product register below it.** The two halves use
  * different typefaces, and the change happens at the seam where the argument stops
@@ -15,13 +15,12 @@
  *
  * **The design language is called Marginalia.** A second thought is a margin note you
  * write to yourself before you send. Paper ground, one annotation blue used only for
- * marks and state, hairline margin rules, numbered editorial sections, and the pause
- * (an ellipsis) as the recurring motif. Use those words in comments.
+ * marks and state, alternating band tones, and the pause (an ellipsis) as the
+ * recurring motif. Use those words in comments.
  *
  * **What Marginalia forbids on top of the absolute bans:** no icon per section, no
  * illustration of an abstract noun, no card grid standing in for an argument, no
- * floating UI screenshot on an angle, no gradient anywhere. The ONLY thing allowed to
- * be visually large is a section numeral.
+ * floating UI screenshot on an angle, no gradient anywhere.
  *
  * **Content safety constraints** (these are not style choices, they are binding to
  * avoid risk to any company):
@@ -30,7 +29,7 @@
  *   - No invented metric, and NO accuracy or precision figure at all: none has been
  *     measured
  *   - The only permitted numbers are the two measured cosine scores already on
- *     `/press`, and section numerals
+ *     `/press`
  *   - Every domain is example.com; never acme, contoso, northwind
  *
  * **Structural responsiveness, not fluid type.** Usable at 390px. Vary the vertical
@@ -41,6 +40,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ReadingMark, NoteMark, ChoiceMark } from "./Marks";
+import { SiteNav } from "./SiteNav";
+import { Band } from "./Band";
 
 /** Copy transcribed from the spec. Checked against the banned list. */
 const COPY = {
@@ -52,7 +53,7 @@ const COPY = {
     "reads your draft on your own computer, points out the line that could cause trouble, and " +
     "offers a safer way to say it.",
   primaryCta: "Try it",
-  secondaryCta: "Read the press release",
+  secondaryCta: "Read the announcement",
   privacyNote: "It runs on your computer. Nobody else sees what you type.",
 
   section01Heading: "Nobody sets out to break a rule",
@@ -130,29 +131,6 @@ const COPY = {
     "does not ensure compliance with any law, regulation, or company policy.",
 } as const;
 
-/**
- * A section numeral. The only number that is allowed to be large anywhere on this
- * page. Editorial documents number their sections; this is an editorial landing page.
- * Muted rather than primary ink, so the numeral marks structure without shouting.
- */
-function SectionNumeral({ children }: { children: ReactNode }) {
-  return (
-    <div
-      className="font-mono text-4xl font-medium tabular-nums text-ink-muted"
-      aria-hidden="true"
-    >
-      {children}
-    </div>
-  );
-}
-
-/**
- * A margin rule: hairline separation between sections. Used only for structure, never
- * decoration. Part of the Marginalia vocabulary.
- */
-function MarginRule() {
-  return <hr className="border-t border-hairline" />;
-}
 
 /**
  * The hero artifact: a static typeset figure showing one real note, rendered in the
@@ -278,10 +256,13 @@ function HeroArtifact() {
 export function Landing({ demoSlot }: { demoSlot: ReactNode }) {
   return (
     <div className="flex flex-col">
-      {/* Hero: no section numeral. Two columns at >=1024px (words left, artifact
-          right), stacking below 1024px. The artifact must stay legible at 390px.
-          Using widened layout tokens for breathing room. */}
-      <section className="flex flex-col gap-rhythm-section py-12 sm:py-16">
+      {/* Global navigation */}
+      <SiteNav current="home" />
+
+      {/* Hero: Two columns at >=1024px (words left, artifact right), stacking
+          below 1024px. The artifact must stay legible at 390px. Using widened
+          layout tokens for breathing room. */}
+      <Band tone="paper" as="section">
         <div className="flex flex-col gap-rhythm-section lg:grid lg:grid-cols-2 lg:items-start lg:gap-12">
           {/* Left column: the words */}
           <div className="flex flex-col gap-6">
@@ -325,61 +306,47 @@ export function Landing({ demoSlot }: { demoSlot: ReactNode }) {
             <HeroArtifact />
           </div>
         </div>
-      </section>
+      </Band>
 
-      <MarginRule />
-
-      {/* Section 01: the problem, broadened beyond over-promising. Serif prose in
-          brand register. */}
-      <section className="flex flex-col gap-6 py-rhythm-section">
-        <div className="flex items-start gap-4 sm:gap-6">
-          <SectionNumeral>01</SectionNumeral>
-          <h2 className="font-serif text-2xl font-semibold text-ink sm:text-3xl">
-            {COPY.section01Heading}
-          </h2>
-        </div>
-        <div className="flex max-w-reading flex-col gap-4 font-serif text-base text-ink-secondary sm:text-lg">
+      {/* Nobody sets out to break a rule: the problem, broadened beyond
+          over-promising. Serif prose in brand register. */}
+      <Band tone="tint" as="section">
+        <h2 className="font-serif text-2xl font-semibold text-ink sm:text-3xl">
+          {COPY.section01Heading}
+        </h2>
+        <div className="mt-6 flex max-w-reading flex-col gap-4 font-serif text-base text-ink-secondary sm:text-lg">
           <p>{COPY.section01P1}</p>
           <p>{COPY.section01P2}</p>
           <p>{COPY.section01P3}</p>
         </div>
-      </section>
+      </Band>
 
-      <MarginRule />
-
-      {/* Section 02: NEW - it works for you, not on you. The most important section.
-          This is what makes the product different: it protects the employee first,
-          runs on their machine, never reports on anyone, and deliberately excludes
-          labor relations. Still brand register, serif prose. */}
-      <section className="flex flex-col gap-6 py-rhythm-section">
-        <div className="flex items-start gap-4 sm:gap-6">
-          <SectionNumeral>02</SectionNumeral>
-          <h2 className="font-serif text-2xl font-semibold text-ink sm:text-3xl">
-            {COPY.section02Heading}
-          </h2>
-        </div>
-        <div className="flex max-w-reading flex-col gap-4 font-serif text-base text-ink-secondary sm:text-lg">
+      {/* It works for you, not on you: The most important section. This is what
+          makes the product different: it protects the employee first, runs on their
+          machine, never reports on anyone, and deliberately excludes labor relations.
+          Still brand register, serif prose. */}
+      <Band tone="paper" as="section">
+        <h2 className="font-serif text-2xl font-semibold text-ink sm:text-3xl">
+          {COPY.section02Heading}
+        </h2>
+        <div className="mt-6 flex max-w-reading flex-col gap-4 font-serif text-base text-ink-secondary sm:text-lg">
           <p>{COPY.section02P1}</p>
           <p>{COPY.section02P2}</p>
           <p>{COPY.section02P3}</p>
         </div>
-      </section>
+      </Band>
 
-      <MarginRule />
-
-      {/* Section 03: how it works. Three numbered moves, still brand register.
-          Each move has a mechanism mark showing the mechanism itself. */}
-      <section className="flex flex-col gap-6 py-rhythm-block">
-        <div className="flex items-start gap-4 sm:gap-6">
-          <SectionNumeral>03</SectionNumeral>
-          <h2 className="font-serif text-2xl font-semibold text-ink sm:text-3xl">
-            {COPY.section03Heading}
-          </h2>
-        </div>
-        <p className="max-w-reading font-serif text-base text-ink-secondary sm:text-lg">
+      {/* A note in the margin, before you send: how it works. Three numbered moves,
+          still brand register. Each move has a mechanism mark showing the mechanism
+          itself. */}
+      <Band tone="tint" as="section">
+        <h2 className="font-serif text-2xl font-semibold text-ink sm:text-3xl">
+          {COPY.section03Heading}
+        </h2>
+        <p className="mt-6 max-w-reading font-serif text-base text-ink-secondary sm:text-lg">
           {COPY.section03P1}
         </p>
-        <ol className="flex max-w-reading flex-col gap-5">
+        <ol className="mt-6 flex max-w-reading flex-col gap-5">
           <li className="flex gap-4">
             <span className="shrink-0 font-mono text-lg font-medium tabular-nums text-accent">
               1.
@@ -423,22 +390,16 @@ export function Landing({ demoSlot }: { demoSlot: ReactNode }) {
             </div>
           </li>
         </ol>
-      </section>
+      </Band>
 
-      <MarginRule />
-
-      {/* Section 04: the seam. This is where brand register ends and product
-          register begins. The argument stops, the demo starts, and the typeface
-          changes under the reader. Rules pointer removed: now reachable from the
-          composer itself. */}
-      <section className="flex flex-col gap-6 py-rhythm-page">
-        <div id="try" className="flex items-start gap-4 sm:gap-6">
-          <SectionNumeral>04</SectionNumeral>
-          <h2 className="font-serif text-2xl font-semibold text-ink sm:text-3xl">
-            {COPY.section04Heading}
-          </h2>
-        </div>
-        <div className="flex max-w-reading flex-col gap-4">
+      {/* Try it: the seam. This is where brand register ends and product register
+          begins. The argument stops, the demo starts, and the typeface changes under
+          the reader. Rules pointer removed: now reachable from the composer itself. */}
+      <Band tone="paper" as="section" id="try">
+        <h2 className="font-serif text-2xl font-semibold text-ink sm:text-3xl">
+          {COPY.section04Heading}
+        </h2>
+        <div className="mt-6 flex max-w-reading flex-col gap-4">
           <p className="font-serif text-base text-ink-secondary sm:text-lg">
             {COPY.section04Seam}
           </p>
@@ -448,22 +409,17 @@ export function Landing({ demoSlot }: { demoSlot: ReactNode }) {
         {/* The demo slot. The live product, exactly the components that are there
             today: recipient switch, thread, pending draft with guidance, composer
             and status line. The type changes here from serif to system stack. */}
-        <div>{demoSlot}</div>
-      </section>
+        <div className="mt-8">{demoSlot}</div>
+      </Band>
 
-      <MarginRule />
-
-      {/* Section 05: the limits. What it does not do. Still product register.
-          Broadened to match the new positioning: covers all eight rules, not just
-          over-promising. */}
-      <section className="flex flex-col gap-6 py-rhythm-section">
-        <div className="flex items-start gap-4 sm:gap-6">
-          <SectionNumeral>05</SectionNumeral>
-          <h2 className="text-2xl font-semibold text-ink sm:text-3xl">
-            {COPY.section05Heading}
-          </h2>
-        </div>
-        <div className="flex max-w-reading flex-col gap-5">
+      {/* You do not have to take our word for it: the limits. What it does not do.
+          Still product register. Broadened to match the new positioning: covers all
+          eight rules, not just over-promising. */}
+      <Band tone="tint" as="section">
+        <h2 className="text-2xl font-semibold text-ink sm:text-3xl">
+          {COPY.section05Heading}
+        </h2>
+        <div className="mt-6 flex max-w-reading flex-col gap-5">
           <p className="text-base text-ink-secondary sm:text-lg">
             {COPY.section05P1}
           </p>
@@ -499,33 +455,10 @@ export function Landing({ demoSlot }: { demoSlot: ReactNode }) {
             </ul>
           </div>
         </div>
-      </section>
+      </Band>
 
-      <MarginRule />
-
-      {/* Footer: disclaimer and links. */}
-      <footer className="flex flex-col gap-4 py-8">
-        <nav aria-label="Site" className="flex flex-wrap items-center gap-4 text-sm">
-          <Link
-            href="/press"
-            className="text-ink-secondary underline decoration-hairline underline-offset-2 transition-control hover:text-ink hover:decoration-control"
-          >
-            Press
-          </Link>
-          <Link
-            href="/settings"
-            className="text-ink-secondary underline decoration-hairline underline-offset-2 transition-control hover:text-ink hover:decoration-control"
-          >
-            Rules
-          </Link>
-          <a
-            href="https://github.com/bharathts07/second-thought"
-            className="text-ink-secondary underline decoration-hairline underline-offset-2 transition-control hover:text-ink hover:decoration-control"
-            rel="noreferrer"
-          >
-            GitHub
-          </a>
-        </nav>
+      {/* Footer: disclaimer. */}
+      <footer className="mx-auto max-w-app px-4 py-8">
         <p className="max-w-reading text-2xs text-ink-muted">{COPY.disclaimer}</p>
       </footer>
     </div>

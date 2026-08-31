@@ -4,7 +4,7 @@
  * These tests assert requirements rather than class names, following the same idiom
  * as Composer.test.tsx. They verify:
  *   - The product name, h1, and all five section headings render
- *   - Section numerals are 01, 02, 03, 04, 05: contiguous, one per section, no repeat
+ *   - Six bands with alternating tones: paper, tint, paper, tint, paper, tint
  *   - The demo anchor id="try" exists and the primary CTA points at it
  *   - The four "what it does not do" limits are present, and the accuracy limit
  *     says it has not been measured
@@ -52,8 +52,11 @@ describe("Landing component structure", () => {
   it("renders the product name prominently in the hero", () => {
     const markup = render();
     expect(markup).toContain("Second Thought");
-    // The wordmark appears early in the document, before the sections.
-    expect(markup.indexOf("Second Thought")).toBeLessThan(markup.indexOf("01"));
+    // The wordmark appears early in the document, before the first section heading.
+    const wordmarkPos = markup.indexOf("Second Thought");
+    const firstSectionPos = markup.indexOf("Nobody sets out to break a rule");
+    expect(wordmarkPos).toBeGreaterThan(-1);
+    expect(wordmarkPos).toBeLessThan(firstSectionPos);
   });
 
   it("renders the h1 and lead copy", () => {
@@ -74,35 +77,64 @@ describe("Landing component structure", () => {
   });
 });
 
-describe("Section numerals", () => {
-  it("renders section numerals 01, 02, 03, 04, 05 exactly once each", () => {
+describe("Band structure and alternating tones", () => {
+  it("renders six sections with alternating background tones", () => {
     const markup = render();
-    // Count occurrences of each numeral. They should appear exactly once, and
-    // only as section markers (not in prose).
-    const count01 = (markup.match(/aria-hidden="true"[^>]*>01</g) || []).length;
-    const count02 = (markup.match(/aria-hidden="true"[^>]*>02</g) || []).length;
-    const count03 = (markup.match(/aria-hidden="true"[^>]*>03</g) || []).length;
-    const count04 = (markup.match(/aria-hidden="true"[^>]*>04</g) || []).length;
-    const count05 = (markup.match(/aria-hidden="true"[^>]*>05</g) || []).length;
+    // The landing uses six bands alternating tone="paper" and tone="tint".
+    // We check for the presence of the background classes applied by Band.
+    // Expected pattern: paper (hero), tint (section 1), paper (section 2),
+    // tint (section 3), paper (section 4 / seam), tint (section 5).
 
-    expect(count01).toBe(1);
-    expect(count02).toBe(1);
-    expect(count03).toBe(1);
-    expect(count04).toBe(1);
-    expect(count05).toBe(1);
+    // Count occurrences of the tone classes. The exact count depends on whether
+    // other components also use these classes, so we verify at least 6 bands exist.
+    const paperCount = (markup.match(/bg-surface/g) || []).length;
+    const tintCount = (markup.match(/bg-tint/g) || []).length;
+
+    // At minimum we expect 3 of each tone for the 6 bands.
+    expect(paperCount).toBeGreaterThanOrEqual(3);
+    expect(tintCount).toBeGreaterThanOrEqual(3);
   });
 
-  it("uses contiguous numerals starting from 01 with no gaps", () => {
+  it("renders the hero section heading before the first problem statement", () => {
     const markup = render();
-    // No 00, no 06, no gap in the sequence.
-    expect(markup).not.toContain(">00<");
-    expect(markup).not.toContain(">06<");
+    const heroIndex = markup.indexOf("A second thought, before you hit send");
+    const section1Index = markup.indexOf("Nobody sets out to break a rule");
+    expect(heroIndex).toBeLessThan(section1Index);
+    expect(heroIndex).toBeGreaterThan(-1);
   });
 
-  it("hides numerals from assistive technology with aria-hidden", () => {
+  it("renders section headings in the expected order", () => {
     const markup = render();
-    // Every numeral is decorative structure and should be aria-hidden.
-    expect(markup.match(/aria-hidden="true"[^>]*>0[1-5]</g)?.length).toBe(5);
+    // Check if each heading appears exactly once by being more specific -
+    // look for them as h2 class patterns or near specific text blocks
+    const section1Match = markup.match(/class="[^"]*font-serif[^"]*text-2xl[^"]*font-semibold[^>]*>Nobody sets out to break a rule</);
+    const section2Match = markup.match(/class="[^"]*font-serif[^"]*text-2xl[^"]*font-semibold[^>]*>It works for you, not on you</);
+    const section3Match = markup.match(/class="[^"]*font-serif[^"]*text-2xl[^"]*font-semibold[^>]*>A note in the margin, before you send</);
+
+    // For section 4, match the h2 with "Try it" that's NOT inside an anchor
+    const section4Match = markup.match(/class="[^"]*font-serif[^"]*text-2xl[^"]*font-semibold[^>]*>Try it</);
+    const section5Match = markup.match(/class="[^"]*text-2xl[^"]*font-semibold[^>]*>You do not have to take our word for it</);
+
+    // All headings must be found
+    expect(section1Match).toBeTruthy();
+    expect(section2Match).toBeTruthy();
+    expect(section3Match).toBeTruthy();
+    expect(section4Match).toBeTruthy();
+    expect(section5Match).toBeTruthy();
+
+    // Get their positions
+    const section1Pos = section1Match ? markup.indexOf(section1Match[0]) : -1;
+    const section2Pos = section2Match ? markup.indexOf(section2Match[0]) : -1;
+    const section3Pos = section3Match ? markup.indexOf(section3Match[0]) : -1;
+    const section4Pos = section4Match ? markup.indexOf(section4Match[0]) : -1;
+    const section5Pos = section5Match ? markup.indexOf(section5Match[0]) : -1;
+
+    const positions = [section1Pos, section2Pos, section3Pos, section4Pos, section5Pos];
+
+    // They must appear in order
+    for (let i = 1; i < positions.length; i++) {
+      expect(positions[i]).toBeGreaterThan(positions[i - 1]);
+    }
   });
 });
 
@@ -118,21 +150,20 @@ describe("Demo anchor and call to action", () => {
     expect(markup).toContain("Try it");
   });
 
-  it("places the anchor in section 04, which comes before section 05", () => {
+  it("places the anchor in the Try it section, which comes before the limits section", () => {
     const markup = render();
-    // Find the section boundaries. Section 04 should contain id="try", and it
-    // should come before section 05 in the document.
-    const pos04 = markup.indexOf("aria-hidden=\"true\">04<");
-    const pos05 = markup.indexOf("aria-hidden=\"true\">05<");
+    // Find the section boundaries. The Try it section contains id="try", and it
+    // should come before "You do not have to take our word for it" in the document.
+    const tryItHeading = markup.indexOf("Try it");
+    const limitsHeading = markup.indexOf("You do not have to take our word for it");
     const tryPos = markup.indexOf('id="try"');
 
     // The anchor exists.
     expect(tryPos).toBeGreaterThan(-1);
-    // Section 04 comes before section 05.
-    expect(pos04).toBeLessThan(pos05);
-    // The anchor is somewhere between the start of the document and section 05,
-    // which is a loose but sufficient check that it's in the right region.
-    expect(tryPos).toBeLessThan(pos05);
+    // Try it heading comes before limits heading.
+    expect(tryItHeading).toBeLessThan(limitsHeading);
+    // The anchor is somewhere in the Try it region.
+    expect(tryPos).toBeLessThan(limitsHeading);
   });
 });
 

@@ -38,7 +38,7 @@ import { RuleRow, ruleRowId } from "@/app/components/RuleRow";
 /** Copy deck for the reframed settings page. */
 const COPY = {
   backToProduct: "Second Thought",
-  title: "Rules and settings",
+  title: "Settings",
   subtitle:
     "The things your company has a position on, across what you can promise, what you can share, and how you talk to people.",
 
@@ -66,77 +66,10 @@ const COPY = {
     "of this between visits are on the roadmap. This version shows the set as " +
     "shipped and lets you switch rules off for the session.",
 
-  modelsHeading: "What downloads",
-  modelsLead:
-    "Capability arrives in tiers, and the page does real work before any model " +
-    "exists. Sizes are stated before anything downloads.",
-  modelsRoadmap:
-    "Turning the third tier on from here, and clearing what this browser has " +
-    "cached, belong in this section and are not wired up yet.",
-
-  privacyHeading: "Privacy",
-  // Leads with what is true of THIS build. The previous wording opened by
-  // claiming rules are stored in this browser and corrected itself two
-  // paragraphs later, which is the wrong order for a privacy statement: the
-  // reader should not have to keep reading to find out the first sentence was
-  // aspirational.
-  privacyStored:
-    "Messages you draft are never stored and never sent. When rule editing " +
-    "ships, the rules you write will be kept in this browser and nowhere else.",
-  privacyMemory:
-    "Drafts, findings, and the notes you keep for yourself are held in memory " +
-    "only and are gone when you close the tab. There is nothing to export and " +
-    "nothing to hand over.",
-  privacyThisBuild:
-    "In this version nothing is written to any of those surfaces at all: the " +
-    "switches above last until you reload the page.",
-  privacyRoadmap:
-    "“Delete everything stored” will clear all three in one action. It " +
-    "is not wired up yet, and an action that cleared two of the three would be " +
-    "worth less than an honest absence.",
-
   disclaimer:
     "Second Thought is a drafting aid. It does not provide legal or compliance advice and " +
     "does not ensure compliance with any law, regulation, or company policy.",
 } as const;
-
-/** The three tiers from `hosting-and-load.md` §5, in the order they arrive. */
-const TIERS: readonly { name: string; size: string; detail: string }[] = [
-  {
-    name: "The page itself",
-    size: "~150KB",
-    detail:
-      "Arrives immediately. Pattern checks are already running: secrets, " +
-      "personal-data shapes, and term lists.",
-  },
-  {
-    name: "Wording checks",
-    size: "~22MB",
-    detail:
-      "Wording checks need a one-time 22MB download. It happens once and stays " +
-      "in this browser's cache, which is why nothing you type has to leave your " +
-      "machine.",
-  },
-  {
-    name: "Rewrite in your voice",
-    size: "~280MB",
-    detail:
-      "Also suggest wording in your own voice · one-time 280MB download · runs " +
-      "on your device. Only if you ask for it.",
-  },
-];
-
-/**
- * The three PERSISTENT surfaces from `ux-spec.md` §12, and only those three. What
- * lives in memory is stated as a sentence below the list rather than as a fourth
- * row, because the distinction between the two is the whole privacy argument and a
- * row in the same table blurs it.
- */
-const STORAGE: readonly { what: string; where: string }[] = [
-  { what: "Your preferences", where: "This browser's local storage" },
-  { what: "Rules you write", where: "This browser's database" },
-  { what: "Model files", where: "This browser's cache storage" },
-];
 
 /** Read once at module load. `Reset to defaults` restores exactly this. */
 const DEFAULT_ENABLED: Readonly<Record<string, boolean>> = Object.fromEntries(
@@ -308,66 +241,18 @@ export default function SettingsPage() {
               {COPY.personalRoadmap}
             </p>
           </div>
-        </Section>
 
-        <Section id="models" heading={COPY.modelsHeading}>
-          <p className="max-w-reading text-md text-ink-secondary">{COPY.modelsLead}</p>
-
-          {/* Not a table: at 390px a four-column table of sizes and prose wraps into
-              something nobody reads. One row per tier, size in the mono face, which
-              keeps the three figures scannable in a column. */}
-          <ul className={PANEL}>
-            {TIERS.map((tier) => (
-              <li key={tier.name} className="flex flex-col gap-1 px-4 py-3 sm:px-5">
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <span className="text-base font-medium text-ink">{tier.name}</span>
-                  <span className="font-mono text-xs text-ink-secondary">{tier.size}</span>
-                </div>
-                <p className="max-w-reading text-sm text-ink-secondary">{tier.detail}</p>
-              </li>
-            ))}
-          </ul>
-
-          <div className="flex flex-col gap-1">
-            <Eyebrow>{COPY.roadmapHeading}</Eyebrow>
-            <p className="max-w-reading text-sm text-ink-secondary">
-              {COPY.modelsRoadmap}
-            </p>
-          </div>
-        </Section>
-
-        <Section id="privacy" heading={COPY.privacyHeading}>
-          {/* The deck's own string, and it is precise because it was corrected once
-              for overclaiming: rules you write ARE stored, so a blanket "nothing you
-              type is stored" was falsifiable in two clicks (F14). */}
-          <p className="max-w-reading text-md text-ink">{COPY.privacyStored}</p>
-
-          <ul className={PANEL}>
-            {STORAGE.map((surface) => (
-              <li
-                key={surface.what}
-                className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-4 py-3 sm:px-5"
-              >
-                <span className="text-sm font-medium text-ink">{surface.what}</span>
-                <span className="text-sm text-ink-secondary">{surface.where}</span>
-              </li>
-            ))}
-          </ul>
-
-          <p className="max-w-reading text-md text-ink-secondary">
-            {COPY.privacyMemory}
+          <p className="mt-6 text-sm text-ink-secondary">
+            For model details and what downloads, see{" "}
+            <Link href="/roadmap" className="font-medium text-accent hover:underline">
+              Roadmap
+            </Link>
+            . For privacy and storage, see{" "}
+            <Link href="/privacy" className="font-medium text-accent hover:underline">
+              Privacy
+            </Link>
+            .
           </p>
-
-          <p className="max-w-reading text-sm text-ink-secondary">
-            {COPY.privacyThisBuild}
-          </p>
-
-          <div className="flex flex-col gap-1">
-            <Eyebrow>{COPY.roadmapHeading}</Eyebrow>
-            <p className="max-w-reading text-sm text-ink-secondary">
-              {COPY.privacyRoadmap}
-            </p>
-          </div>
         </Section>
       </main>
 

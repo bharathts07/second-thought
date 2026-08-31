@@ -38,50 +38,74 @@ const text = (fragment: string) =>
     .trim();
 
 /**
- * The sections, in document order, keyed by the id their heading carries. Sections
- * on this page never nest, so a non-greedy match is exact rather than lucky.
+ * Band elements with their background tone extracted from the class attribute.
+ * Bands provide the visual rhythm and section boundaries, replacing numbered
+ * editorial furniture.
+ */
+const bands = (rendered: string) =>
+  Array.from(
+    rendered.matchAll(/<(section|div)[^>]*class="([^"]*\b(?:bg-surface|bg-tint)\b[^"]*)"/g),
+  ).map((m) => ({
+    element: m[1],
+    tone: m[2].includes("bg-tint") ? "tint" : "paper",
+  }));
+
+/**
+ * Section headings (h2 elements) in document order.
+ */
+const headings = (rendered: string) =>
+  Array.from(
+    rendered.matchAll(/<h2\b[^>]*id="([^"]+)"[^>]*>([\s\S]*?)<\/h2>/g),
+  ).map((m) => ({ id: m[1], text: text(m[2]) }));
+
+/**
+ * The sections, in document order, keyed by the id their heading carries.
  */
 const sections = (rendered: string) =>
   Array.from(
-    rendered.matchAll(/<section aria-labelledby="([^"]+)"[^>]*>([\s\S]*?)<\/section>/g),
+    rendered.matchAll(/<section[^>]*aria-labelledby="([^"]+)"[^>]*>([\s\S]*?)<\/section>/g),
   ).map((m) => ({ id: m[1], body: m[2] }));
 
-/** Everything that is NOT inside a section: the header, the eyebrow, the lead. */
+/** Everything that is NOT inside a Band section. */
 const outsideSections = (rendered: string) =>
-  rendered.replace(/<section aria-labelledby="[^"]+"[^>]*>[\s\S]*?<\/section>/g, " ");
+  rendered.replace(/<section[^>]*aria-labelledby="[^"]+"[^>]*>[\s\S]*?<\/section>/g, " ");
 
-/**
- * The section numerals. Changed 2026-08-30 to be large editorial furniture
- * rather than small eyebrows, so the pattern now looks for the numeral as a
- * text-xl element with tabular-nums, not an uppercase label.
- */
-const numbers = (rendered: string) =>
-  Array.from(rendered.matchAll(/<p class="[^"]*\btext-xl\b[^"]*\btabular-nums\b[^"]*">([^<]*)<\/p>/g))
-    .map((m) => text(m[1]))
-    .filter((t) => /^\d{2}$/.test(t));
+describe("press: band alternation", () => {
+  it("has multiple bands with alternating tones", () => {
+    const found = bands(markup());
 
-describe("press: the running section number", () => {
-  it("starts at 01 and counts up with no gap and no repeat", () => {
-    const found = numbers(markup());
+    expect(found.length).toBeGreaterThan(3);
 
-    expect(found.length).toBeGreaterThan(1);
-    expect(found).toEqual(
-      found.map((_, i) => String(i + 1).padStart(2, "0")),
-    );
+    // Check that bands alternate (allowing for the first Band which wraps the intro)
+    for (let i = 1; i < found.length - 1; i++) {
+      expect(
+        found[i].tone !== found[i + 1].tone,
+        `Band ${i} and Band ${i + 1} should have different tones`,
+      ).toBe(true);
+    }
   });
 
-  it("has one number for every section on the page", () => {
-    const rendered = markup();
+  it("has section headings for each major section", () => {
+    const found = headings(markup());
 
-    expect(numbers(rendered).length).toBe(sections(rendered).length);
+    // At least 7 major sections after the title
+    expect(found.length).toBeGreaterThanOrEqual(7);
+
+    // Key sections must exist
+    const ids = found.map((h) => h.id);
+    expect(ids).toContain("the-gap-heading");
+    expect(ids).toContain("how-it-works-heading");
+    expect(ids).toContain("why-local-heading");
+    expect(ids).toContain("the-rules-heading");
   });
 });
 
 describe("press: every heading a section points at exists", () => {
-  it("resolves each aria-labelledby to a real id", () => {
+  it("resolves each aria-labelledby to a real heading id", () => {
     const rendered = markup();
 
     for (const { id } of sections(rendered)) {
+      // The aria-labelledby should point to an h2 with that id
       expect(rendered).toContain(`id="${id}"`);
     }
   });
@@ -175,7 +199,7 @@ const MACHINERY = [
 ];
 
 /** The one section allowed to name the machinery, by the heading a reader sees. */
-const DISCLOSURE = "how-it-works";
+const DISCLOSURE = "how-it-works-heading";
 
 describe("press: where the machinery may be named", () => {
   it("keeps it out of every section except How it works", () => {
