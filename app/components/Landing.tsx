@@ -68,7 +68,7 @@ const COPY = {
     "The person in trouble is the person who typed it. Almost everything in this space is built " +
     "for the employer. This is built for you.",
   section02P2:
-    "No console, no reporting, nothing kept. The rule set excludes labour relations, enforced in code.",
+    "No console, no reporting, nothing kept.",
 
   section03Heading: "A note in the margin, before you send",
   section03Move1Title: "It reads the draft as you type",
@@ -82,22 +82,13 @@ const COPY = {
 
   section04Heading: "Try it",
   section04Seam:
-    "That is the argument. This is the working thing. Answer Sam and watch.",
+    "That is the argument. This is the working thing.",
   section04Harness:
     "This is a demo. The intended form is an extension.",
 
   section05Heading: "You do not have to take our word for it",
   section05P1:
     "Let the page load, then turn your network off. The checking keeps working.",
-  section05Eyebrow: "What it does not do",
-  section05Limit1:
-    "It never stops you sending anything.",
-  section05Limit2:
-    "Accuracy has not been measured. Tuned by judgement.",
-  section05Limit3:
-    "Eight rules, a demonstration. Security promises, data residency, delivery dates, pricing, " +
-    "moving conversations, and personal criticism.",
-  section05Limit4: "English only, one surface.",
 
   disclaimer:
     "Second Thought is a drafting aid. It does not provide legal or compliance advice and " +
@@ -378,9 +369,8 @@ export function Landing({ demoSlot }: { demoSlot: ReactNode }) {
         <div className="mt-8">{demoSlot}</div>
       </Band>
 
-      {/* You do not have to take our word for it: the limits. What it does not do.
-          Still product register. Broadened to match the new positioning: covers all
-          eight rules, not just over-promising. */}
+      {/* You do not have to take our word for it: the network-off check.
+          Still product register. The visitor can verify the claim themselves. */}
       <Band tone="tint" as="section">
         <h2 className="text-2xl font-semibold text-ink sm:text-3xl">
           {COPY.section05Heading}
@@ -389,37 +379,6 @@ export function Landing({ demoSlot }: { demoSlot: ReactNode }) {
           <p className="text-base text-ink-secondary sm:text-lg">
             {COPY.section05P1}
           </p>
-          <div className="flex flex-col gap-4">
-            <p className="text-xs font-medium uppercase tracking-label text-ink-muted">
-              {COPY.section05Eyebrow}
-            </p>
-            <ul className="flex flex-col gap-3 text-sm text-ink-secondary">
-              <li className="flex gap-2">
-                <span className="shrink-0" aria-hidden="true">
-                  -
-                </span>
-                <span>{COPY.section05Limit1}</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="shrink-0" aria-hidden="true">
-                  -
-                </span>
-                <span>{COPY.section05Limit2}</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="shrink-0" aria-hidden="true">
-                  -
-                </span>
-                <span>{COPY.section05Limit3}</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="shrink-0" aria-hidden="true">
-                  -
-                </span>
-                <span>{COPY.section05Limit4}</span>
-              </li>
-            </ul>
-          </div>
         </div>
       </Band>
 

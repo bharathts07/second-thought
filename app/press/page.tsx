@@ -24,10 +24,9 @@
  *   - **The ceiling is stated before any capability** (§5 of content-safety):
  *     advisory, bypassable, one surface, English only, and a demonstration rule
  *     set rather than a compliance programme.
- *   - **No precision figures.** Every rule threshold in `policies.ts` is still
- *     `PLACEHOLDER_THRESHOLD` and nothing has been measured out of sample, so the
- *     table prints the copy deck's `rule.notEvaluated` rather than a number that
- *     would be the most credible-looking and least true thing on the site.
+ *   - **No precision figures published.** Every rule threshold in `policies.ts` is
+ *     still `PLACEHOLDER_THRESHOLD` and nothing has been measured out of sample.
+ *     The `/roadmap` page states this openly in the "Similarity bars" feature note.
  *
  * The rules table reads `COMPANY_RULES` directly rather than restating it, so the
  * published table cannot drift from the rule set the engine actually runs.
@@ -64,7 +63,6 @@ const COPY = {
   title: "Second Thought",
   subtitle:
     "A draft check that runs in your browser. Nothing you type is sent anywhere.",
-  notEvaluated: "Not evaluated",
   disclaimer:
     "Second Thought is a drafting aid. It does not provide legal or compliance advice and " +
     "does not ensure compliance with any law, regulation, or company policy.",
@@ -106,12 +104,6 @@ const COLUMN_HEAD =
  * The eight rules, as a genuine data table (T3.5.2) rather than bullets pretending
  * to be data.
  *
- * The precision column is deliberately full of the same words. A visitor who just
- * got a card will look for this table, and `Not evaluated` eight times is the
- * honest state of the rule set today: the thresholds are placeholders and nothing
- * has been scored against a held-out sample. A number here would be in-sample and
- * flattering, which is worse than a blank admission.
- *
  * The wrapper scrolls horizontally on a narrow screen and is focusable with a
  * label, because a scroll region a keyboard user cannot reach is a table they
  * cannot read.
@@ -126,8 +118,7 @@ function RulesTable() {
     >
       <table className="w-full min-w-reading border-collapse text-left text-sm">
         <caption className="sr-only">
-          Each rule with its severity, the conversations it applies in, and its
-          published precision.
+          Each rule with its severity and the conversations it applies in.
         </caption>
         <thead>
           <tr>
@@ -139,9 +130,6 @@ function RulesTable() {
             </th>
             <th scope="col" className={COLUMN_HEAD}>
               Applies in
-            </th>
-            <th scope="col" className={COLUMN_HEAD}>
-              Precision
             </th>
           </tr>
         </thead>
@@ -160,9 +148,6 @@ function RulesTable() {
                 <SeverityChip severity={rule.severity} />
               </td>
               <td className={`${CELL} text-ink-secondary`}>{scopeLabel(rule)}</td>
-              <td className={`${CELL} font-mono text-2xs tabular-nums text-ink-muted`}>
-                {COPY.notEvaluated}
-              </td>
             </tr>
           ))}
         </tbody>
@@ -319,14 +304,6 @@ export default function PressPage() {
             </ProseP>
             <ProseFigure label="The eight rules, their severities and their scope">
               <RulesTable />
-              <p className="mt-3 text-xs text-ink-muted sm:hidden">
-                The table scrolls sideways here to reach scope and precision.
-              </p>
-              <ProseFigureNote>
-                No rule here has a published precision figure. Every rule is tuned by
-                guesswork, not measurement, and none has been scored against a held-out
-                sample.
-              </ProseFigureNote>
             </ProseFigure>
           </Prose>
         </Band>
@@ -337,24 +314,15 @@ export default function PressPage() {
             <ProseSectionHeading id="roadmap-heading">
               What comes next
             </ProseSectionHeading>
-            <ProseSubheading>
-              The same checks inside tools teams already use
-            </ProseSubheading>
             <ProseP>
-              The composer here is a demonstration. The intended form is a browser
-              extension.
+              Three items are in development. A browser extension to bring the same checks
+              into live drafting. Rule authoring with import and export, so teams can tune
+              and share their own rule sets. Rewriting in the writer&rsquo;s own voice
+              rather than fixed replacement text.
             </ProseP>
-            <ProseSubheading>
-              Policy authoring with a precision harness
-            </ProseSubheading>
             <ProseP>
-              The next version measures a candidate rule&rsquo;s false-positive rate
-              against a sample corpus before it goes live.
-            </ProseP>
-            <ProseSubheading>A task-specific classifier</ProseSubheading>
-            <ProseP>
-              A smaller classifier trained for this exact task would be faster and more
-              accurate than similarity against examples.
+              See the <TextLink href="/roadmap">roadmap page</TextLink> for current status
+              and technical detail.
             </ProseP>
           </Prose>
         </Band>

@@ -89,18 +89,61 @@ describe("SiteNav", () => {
     expect(githubSection).not.toContain("aria-current");
   });
 
-  it("has no svg elements in the nav", () => {
+  it("internal links have no icons", () => {
     const html = renderToStaticMarkup(<SiteNav current="home" />);
 
-    const svgMatches = html.match(/<svg/g);
-    expect(svgMatches).toBeNull();
+    // Wordmark link - no svg
+    const wordmarkSection = html.substring(
+      html.indexOf('aria-label="Second Thought home"') - 100,
+      html.indexOf('aria-label="Second Thought home"') + 100
+    );
+    expect(wordmarkSection).not.toContain("<svg");
+
+    // Announcement link - no svg
+    const announcementSection = html.substring(
+      html.indexOf('href="/press"') - 100,
+      html.indexOf('href="/press"') + 100
+    );
+    expect(announcementSection).not.toContain("<svg");
+
+    // Roadmap link - no svg
+    const roadmapSection = html.substring(
+      html.indexOf('href="/roadmap"') - 100,
+      html.indexOf('href="/roadmap"') + 100
+    );
+    expect(roadmapSection).not.toContain("<svg");
+
+    // Settings link - no svg
+    const settingsSection = html.substring(
+      html.indexOf('href="/settings"') - 100,
+      html.indexOf('href="/settings"') + 100
+    );
+    expect(settingsSection).not.toContain("<svg");
   });
 
-  it("GitHub link opens in a new tab with security attributes", () => {
+  it("GitHub link has both icon marks and opens in new tab", () => {
     const html = renderToStaticMarkup(<SiteNav current="home" />);
 
-    expect(html).toContain('target="_blank"');
-    expect(html).toContain('rel="noopener noreferrer"');
+    // Extract the GitHub link section
+    const githubSection = html.substring(
+      html.indexOf('href="https://github.com/bharathts07/second-thought"') - 100,
+      html.indexOf('href="https://github.com/bharathts07/second-thought"') + 1200
+    );
+
+    // Has target="_blank" with security attributes
+    expect(githubSection).toContain('target="_blank"');
+    expect(githubSection).toContain('rel="noopener noreferrer"');
+
+    // Has accessible name mentioning new tab
+    expect(githubSection).toContain('aria-label="GitHub (opens in new tab)"');
+
+    // Has exactly 2 SVG elements (GitHub icon + external link arrow)
+    const svgMatches = githubSection.match(/<svg/g);
+    expect(svgMatches).toHaveLength(2);
+
+    // Both SVGs are aria-hidden
+    const ariaHiddenMatches = githubSection.match(/aria-hidden="true"/g);
+    expect(ariaHiddenMatches).toHaveLength(2);
   });
 
   it("wraps at narrow widths via flex-wrap", () => {

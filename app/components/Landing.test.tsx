@@ -6,8 +6,6 @@
  *   - The product name, h1, and all five section headings render
  *   - Six bands with alternating tones: paper, tint, paper, tint, paper, tint
  *   - The demo anchor id="try" exists and the primary CTA points at it
- *   - The four "what it does not do" limits are present, and the accuracy limit
- *     says it has not been measured
  *   - No banned tone word and no em-dash appears in the rendered text
  *   - No accuracy or precision figure appears anywhere in the landing markup
  *   - The disclaimer string is present
@@ -164,34 +162,6 @@ describe("Demo anchor and call to action", () => {
     expect(tryItHeading).toBeLessThan(limitsHeading);
     // The anchor is somewhere in the Try it region.
     expect(tryPos).toBeLessThan(limitsHeading);
-  });
-});
-
-describe("The four limits in section 05", () => {
-  it("renders all four 'what it does not do' limits", () => {
-    const markup = render();
-    expect(markup).toContain("It never stops you sending anything");
-    expect(markup).toContain("Accuracy has not been measured");
-    expect(markup).toContain("Eight rules, a demonstration");
-    expect(markup).toContain("English only, one surface");
-  });
-
-  it("states that accuracy has not been measured, not that it is high", () => {
-    const markup = render();
-    expect(markup).toContain("has not been measured");
-    // No invented precision figure in text content. We check that the copy does
-    // not contain patterns like "95% accurate" or "0.98 accuracy".
-    expect(markup).not.toMatch(/\d+% accurate/i);
-    expect(markup).not.toMatch(/accuracy.*\d+%/i);
-    expect(markup).not.toMatch(/\d+\.\d+ accuracy/i);
-  });
-
-  it("lists the limits under the 'What it does not do' eyebrow", () => {
-    const markup = render();
-    expect(markup).toContain("What it does not do");
-    const eyebrowPos = markup.indexOf("What it does not do");
-    const limit1Pos = markup.indexOf("It never stops you sending");
-    expect(limit1Pos).toBeGreaterThan(eyebrowPos);
   });
 });
 
@@ -453,9 +423,9 @@ describe("Mechanism marks", () => {
 
     // The marks are aria-hidden decorative elements. Check for their presence
     // in the full landing page. We expect multiple aria-hidden elements:
-    // section numerals (01, 02, 03, 04, 05) plus the three mechanism marks.
+    // the three mechanism marks, the attachment mark SVG, and decorative hyphens.
     const ariaHiddenCount = (markup.match(/aria-hidden="true"/g) || []).length;
-    expect(ariaHiddenCount).toBeGreaterThanOrEqual(8);
+    expect(ariaHiddenCount).toBeGreaterThanOrEqual(6);
   });
 
   it("marks all mechanism drawings as aria-hidden", () => {
