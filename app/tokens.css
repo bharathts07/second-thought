@@ -216,16 +216,25 @@
   --pad-control-y: var(--space-2); /* 8 */
   --pad-composer: var(--space-3); /* 12 */
 
-  /* `--measure-app` sets the app column's width. `--measure-prose` is the rules
-     table's minimum width and NOT the prose measure: `ch` is the advance of the
-     `0` glyph rather than an average character, so 68ch measured 72-84 characters
-     per line. Prose sets 58ch itself, which lands 66-75. Neither value changed
-     in this pass, because both were measured rather than guessed. */
-  --measure-app: 46rem;
-  --measure-prose: 68ch;
+  /* `--measure-app` sets the app column's width. Widened from 46rem (736px) to
+     58rem (928px) at the client's direction: both pages felt constrained, boxed
+     into the middle of the screen. The tradeoff between readability and spaciousness
+     was made knowingly.
+
+     `--measure-prose` is the rules table's minimum width and NOT the prose measure:
+     `ch` is the advance of the `0` glyph rather than an average character. Widened
+     from 68ch to 80ch for the same reason. This exceeds the typical 65-75 character
+     guidance for body text, but that guidance assumes continuous prose; the rules
+     table is structured content with short cells, and the page's breathing room was
+     judged more valuable than strict adherence to the prose measure.
+
+     Prose itself still sets 58ch, landing 66-75 actual characters. */
+  --measure-app: 58rem;
+  --measure-prose: 80ch;
   /* A message bubble stops well short of the column so the thread reads as a
-   * conversation with two sides rather than as full-width paragraphs. */
-  --measure-bubble: 32rem;
+   * conversation with two sides rather than as full-width paragraphs. Widened
+   * proportionally from 32rem to 38rem to maintain the conversational rhythm. */
+  --measure-bubble: 38rem;
 
   /*
    * Two reserved heights, both for the same reason: nothing above a control the
@@ -402,31 +411,33 @@
 }
 
 /*
- * The accent: one, muted plum, `oklch(0.53 0.09 320)` in light. It marks the
- * selected recipient segment, the focus ring, links, and the primary action, and
- * it never marks severity, so a visitor never has to wonder whether plum means
- * something is wrong. Lightness is retuned per scheme rather than reused, since
- * the same plum that reads considered on paper reads muddy on near-black.
+ * The accent: one, restrained mid blue at hue 250, reading as safety and calm. It
+ * marks the selected recipient segment, the focus ring, links, and the primary
+ * action. Blue is a deliberate choice against the warm paper ground: the contrast
+ * between a cool accent and a warm surface makes the accent read as intentional
+ * rather than as a category default. Chroma reduces as lightness approaches
+ * either extreme, keeping the palette restrained and never touching pure black or
+ * pure white.
  *
- *   --accent         4.91 canvas / 5.29 surface / 5.43 raised / 4.52 sunken
- *                ·   7.44 / 6.83 / 6.11 / 7.77
- *   --accent-strong  7.31 / 7.89 / 8.10 / 6.74  ·  9.73 / 8.94 / 7.99 / 10.16
+ *   --accent         5.12 canvas / 5.52 surface / 5.66 raised / 4.72 sunken
+ *                ·   7.28 / 6.69 / 5.98 / 7.60
+ *   --accent-strong  7.58 / 8.18 / 8.40 / 6.99  ·  9.51 / 8.74 / 7.81 / 9.93
  *   --accent-quiet   the selected segment's fill. --accent-strong on it reads
- *                    6.96 · 6.91, --text-primary 14.14 · 11.04, --accent 4.67 ·
- *                    5.28, --text-muted 5.11 · 5.01.
+ *                    7.22 · 6.76, --text-primary 14.35 · 10.82, --accent 4.88 ·
+ *                    5.17, --text-muted 5.18 · 4.91.
  *
  * The selected segment still carries a 1px `--accent` border and not only its
- * fill, because `--accent-quiet` against `--surface-sunken` is 1.03 light · 1.47
+ * fill, because `--accent-quiet` against `--surface-sunken` is 1.02 light · 1.45
  * dark, well under the 3:1 a meaningful non-text indicator needs. The fill alone
  * would leave the selected state carried by label colour and nothing else. With
- * the border it reads 4.52 light · 7.77 dark against the track it slides in, and
- * the same token carries the progress rule over `--border-subtle` at 4.08 · 5.17,
+ * the border it reads 4.72 light · 7.60 dark against the track it slides in, and
+ * the same token carries the progress rule over `--border-subtle` at 4.26 · 5.06,
  * which is the 3:1 that rule needs as a non-text indicator.
  */
 :root {
-  --accent: light-dark(oklch(0.53 0.09 320), oklch(0.725 0.095 320));
-  --accent-strong: light-dark(oklch(0.44 0.1 320), oklch(0.8 0.08 320));
-  --accent-quiet: light-dark(oklch(0.945 0.02 320), oklch(0.31 0.04 320));
+  --accent: light-dark(oklch(0.52 0.13 250), oklch(0.72 0.095 250));
+  --accent-strong: light-dark(oklch(0.42 0.14 250), oklch(0.79 0.082 250));
+  --accent-quiet: light-dark(oklch(0.95 0.03 250), oklch(0.31 0.04 250));
   --focus-ring: var(--accent);
 }
 

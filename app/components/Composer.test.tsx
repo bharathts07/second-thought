@@ -46,7 +46,13 @@ import {
   scopedCategories,
 } from "./GuidancePanel";
 import { PendingDraft } from "./PendingDraft";
-import { THREAD_EXTERNAL, THREAD_INTERNAL, Thread } from "./Thread";
+import {
+  THREAD_EXTERNAL,
+  THREAD_INTERNAL,
+  Thread,
+  PARTICIPANT_INTERNAL,
+  PARTICIPANT_EXTERNAL,
+} from "./Thread";
 import { visibleProvenance } from "./FindingCard";
 
 const PROMISE_TEXT = "Yes, we guarantee your data never leaves the US.";
@@ -267,26 +273,45 @@ describe("findingsInScope", () => {
  * badge. With the external conversation still on screen, "master switch" is the
  * literally correct reading of what the visitor sees, and the product's central
  * gesture becomes a checkbox.
+ *
+ * Names are now randomized at build time from a set of common American first names.
+ * Tests assert consistency (the same names appear everywhere they should) and the
+ * requirement (internal and external participants are different) rather than
+ * checking for specific hardcoded strings.
  */
 describe("the two seeded threads", () => {
   const render = (thread: typeof THREAD_INTERNAL) =>
     renderToStaticMarkup(<Thread thread={thread} onReset={() => {}} />);
 
-  it("keeps example.com out of the internal thread entirely", () => {
+  it("keeps example.com and the external participant out of the internal thread entirely", () => {
     const markup = render(THREAD_INTERNAL);
     expect(markup).not.toContain("example.com");
-    expect(markup).not.toContain("Sam");
+    expect(markup).not.toContain(PARTICIPANT_EXTERNAL);
     expect(markup).toContain("Platform team");
-    expect(markup).toContain("Priya");
+    expect(markup).toContain(PARTICIPANT_INTERNAL);
   });
 
-  it("shows the external badge and Sam's messages on the external thread", () => {
+  it("shows the external badge and both participants on the external thread", () => {
     const markup = render(THREAD_EXTERNAL);
     expect(markup).toContain("External · example.com");
     expect(markup).toContain("Q3 evaluation");
+    expect(markup).toContain(PARTICIPANT_INTERNAL);
+    expect(markup).toContain(PARTICIPANT_EXTERNAL);
     expect(markup).toContain("can you confirm our data stays inside the US?");
     // The third message is what supplies the time pressure.
     expect(markup).toContain("before Thursday");
+  });
+
+  it("uses different names for internal and external participants", () => {
+    expect(PARTICIPANT_INTERNAL).not.toBe(PARTICIPANT_EXTERNAL);
+  });
+
+  it("uses consistent names across thread data structures", () => {
+    expect(THREAD_INTERNAL.recipientLabel).toBe(PARTICIPANT_INTERNAL);
+    expect(THREAD_EXTERNAL.recipientLabel).toBe(PARTICIPANT_EXTERNAL);
+    expect(THREAD_INTERNAL.participants).toContain(PARTICIPANT_INTERNAL);
+    expect(THREAD_EXTERNAL.participants).toContain(PARTICIPANT_INTERNAL);
+    expect(THREAD_EXTERNAL.participants).toContain(PARTICIPANT_EXTERNAL);
   });
 
   it("gives the internal thread no badge at all", () => {

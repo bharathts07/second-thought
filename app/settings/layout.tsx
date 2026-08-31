@@ -10,7 +10,7 @@ import type { ReactNode } from "react";
 export const metadata: Metadata = {
   title: "Second Thought · Rules",
   description:
-    "Every rule this checker applies, with the wording it looks for and the contexts it applies in.",
+    "Every rule this check applies, covering what you can promise, what you can share, and how you talk to people. Read and disable any of them.",
 };
 
 export default function SettingsLayout({ children }: { children: ReactNode }) {

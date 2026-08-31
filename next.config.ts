@@ -13,6 +13,33 @@ const nextConfig: NextConfig = {
   images: { unoptimized: true },
 
   /**
+   * One random number, chosen here at build time, that picks the demo's two
+   * participant names.
+   *
+   * It lives in the config rather than in the component because of a measured
+   * hydration bug. The names were first chosen by calling `Math.random()` at module
+   * scope in `Thread.tsx`, with a comment claiming that module scope "avoids
+   * hydration mismatches entirely" because it runs before render. The opposite is
+   * true: `Thread.tsx` is part of the client bundle, so its module scope runs a
+   * second time in the browser and drew a different pair. The prerendered HTML said
+   * Skylar and Casey, the browser said something else, and the page logged React
+   * error #418, a hydration text mismatch, on every load.
+   *
+   * `env` is inlined by the bundler at build time into BOTH the prerender and the
+   * client bundle, so both realms read the same literal and there is nothing left to
+   * disagree about. The names still change on every build, which is what was wanted;
+   * they just no longer change between the server's opinion and the browser's.
+   *
+   * The tempting alternative, randomising in a `useEffect` after mount, also works,
+   * but it means the first paint shows one name and swaps it a frame later. On a page
+   * whose entire pitch is that it is careful and finished, a visible flicker in the
+   * conversation is a worse trade than fixing the names per deploy.
+   */
+  env: {
+    NEXT_PUBLIC_NAME_SEED: String(Math.floor(Math.random() * 100_000)),
+  },
+
+  /**
    * Keep Node-only packages out of the browser bundle.
    *
    * `@huggingface/transformers` ships both a browser path (onnxruntime-web) and

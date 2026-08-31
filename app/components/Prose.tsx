@@ -35,16 +35,12 @@ import type { ReactNode } from "react";
 /**
  * The measure, applied per element. See the header note.
  *
- * Calibrated, not assumed. `--measure-prose` is `68ch`, and `ch` is the advance
- * of the `0` glyph, which in every serif in this stack is wider than the average
- * character of running English. At `68ch` the rendered lines measured 72-84
- * characters, so the token's own comment about landing in the 65-75 band T3.5.1
- * asks for was describing the unit rather than the result. `58ch` is that
- * measurement inverted: it holds the same font-relative behaviour and lands the
- * band, and the rules table keeps `min-w-reading` at the full `68ch`, so the
- * figure now breaks the column by a wider and more deliberate margin.
+ * Now uses max-w-reading (the widened token) rather than a hardcoded value, so
+ * the measure follows the design system's prose width. The rules table keeps
+ * min-w-reading, so a data table reads as a figure breaking the column rather
+ * than as a table squeezed into a paragraph.
  */
-const MEASURE = "max-w-[58ch]";
+const MEASURE = "max-w-reading";
 
 /**
  * The typographic base for a whole article: serif at 17px with 1.65 leading.

@@ -40,7 +40,7 @@ const COPY = {
   backToProduct: "Second Thought",
   title: "Rules and settings",
   subtitle:
-    "The things your company would rather you did not promise, and what the check deliberately does not look at.",
+    "The things your company has a position on, across what you can promise, what you can share, and how you talk to people.",
 
   rulesHeading: "Rules",
   companyRules: "From your company",
@@ -252,6 +252,11 @@ export default function SettingsPage() {
         </Link>
         <h1 className="text-xl font-semibold tracking-tight text-ink">{COPY.title}</h1>
         <p className="max-w-reading text-sm text-ink-secondary">{COPY.subtitle}</p>
+        <p className="max-w-reading text-sm text-ink-secondary">
+          This page exists so you can see exactly what is being checked and turn any of it
+          off. Being able to read and disable every rule is part of the commitment that this
+          tool works for you, not on you.
+        </p>
       </header>
 
       <main className="flex flex-col gap-10">

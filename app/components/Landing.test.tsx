@@ -3,8 +3,8 @@
  *
  * These tests assert requirements rather than class names, following the same idiom
  * as Composer.test.tsx. They verify:
- *   - The product name, h1, and all four section headings render
- *   - Section numerals are 01, 02, 03, 04: contiguous, one per section, no repeat
+ *   - The product name, h1, and all five section headings render
+ *   - Section numerals are 01, 02, 03, 04, 05: contiguous, one per section, no repeat
  *   - The demo anchor id="try" exists and the primary CTA points at it
  *   - The four "what it does not do" limits are present, and the accuracy limit
  *     says it has not been measured
@@ -58,15 +58,16 @@ describe("Landing component structure", () => {
 
   it("renders the h1 and lead copy", () => {
     const markup = render();
-    expect(markup).toContain("Know what you just promised, before you hit send.");
+    expect(markup).toContain("A second thought, before you hit send.");
     expect(markup).toContain(
-      "You are answering a customer, quickly. Second Thought reads your draft",
+      "Your company has rules about what you can promise, what you can share, and how you talk to people",
     );
   });
 
-  it("renders all four section headings in order", () => {
+  it("renders all five section headings in order", () => {
     const markup = render();
-    expect(markup).toContain("Nobody sets out to over-promise");
+    expect(markup).toContain("Nobody sets out to break a rule");
+    expect(markup).toContain("It works for you, not on you");
     expect(markup).toContain("A note in the margin, before you send");
     expect(markup).toContain("Try it");
     expect(markup).toContain("You do not have to take our word for it");
@@ -74,7 +75,7 @@ describe("Landing component structure", () => {
 });
 
 describe("Section numerals", () => {
-  it("renders section numerals 01, 02, 03, 04 exactly once each", () => {
+  it("renders section numerals 01, 02, 03, 04, 05 exactly once each", () => {
     const markup = render();
     // Count occurrences of each numeral. They should appear exactly once, and
     // only as section markers (not in prose).
@@ -82,24 +83,26 @@ describe("Section numerals", () => {
     const count02 = (markup.match(/aria-hidden="true"[^>]*>02</g) || []).length;
     const count03 = (markup.match(/aria-hidden="true"[^>]*>03</g) || []).length;
     const count04 = (markup.match(/aria-hidden="true"[^>]*>04</g) || []).length;
+    const count05 = (markup.match(/aria-hidden="true"[^>]*>05</g) || []).length;
 
     expect(count01).toBe(1);
     expect(count02).toBe(1);
     expect(count03).toBe(1);
     expect(count04).toBe(1);
+    expect(count05).toBe(1);
   });
 
   it("uses contiguous numerals starting from 01 with no gaps", () => {
     const markup = render();
-    // No 00, no 05, no gap in the sequence.
+    // No 00, no 06, no gap in the sequence.
     expect(markup).not.toContain(">00<");
-    expect(markup).not.toContain(">05<");
+    expect(markup).not.toContain(">06<");
   });
 
   it("hides numerals from assistive technology with aria-hidden", () => {
     const markup = render();
     // Every numeral is decorative structure and should be aria-hidden.
-    expect(markup.match(/aria-hidden="true"[^>]*>0[1-4]</g)?.length).toBe(4);
+    expect(markup.match(/aria-hidden="true"[^>]*>0[1-5]</g)?.length).toBe(5);
   });
 });
 
@@ -115,25 +118,25 @@ describe("Demo anchor and call to action", () => {
     expect(markup).toContain("Try it");
   });
 
-  it("places the anchor in section 03, which comes before section 04", () => {
+  it("places the anchor in section 04, which comes before section 05", () => {
     const markup = render();
-    // Find the section boundaries. Section 03 should contain id="try", and it
-    // should come before section 04 in the document.
-    const pos03 = markup.indexOf("aria-hidden=\"true\">03<");
+    // Find the section boundaries. Section 04 should contain id="try", and it
+    // should come before section 05 in the document.
     const pos04 = markup.indexOf("aria-hidden=\"true\">04<");
+    const pos05 = markup.indexOf("aria-hidden=\"true\">05<");
     const tryPos = markup.indexOf('id="try"');
 
     // The anchor exists.
     expect(tryPos).toBeGreaterThan(-1);
-    // Section 03 comes before section 04.
-    expect(pos03).toBeLessThan(pos04);
-    // The anchor is somewhere between the start of the document and section 04,
+    // Section 04 comes before section 05.
+    expect(pos04).toBeLessThan(pos05);
+    // The anchor is somewhere between the start of the document and section 05,
     // which is a loose but sufficient check that it's in the right region.
-    expect(tryPos).toBeLessThan(pos04);
+    expect(tryPos).toBeLessThan(pos05);
   });
 });
 
-describe("The four limits in section 04", () => {
+describe("The four limits in section 05", () => {
   it("renders all four 'what it does not do' limits", () => {
     const markup = render();
     expect(markup).toContain("It never stops you sending anything");
@@ -217,11 +220,6 @@ describe("Links", () => {
     expect(markup).toContain('href="/press"');
     expect(markup).toContain('href="/settings"');
     expect(markup).toContain("github.com/bharathts07/second-thought");
-  });
-
-  it("links to the rules page from the seam section", () => {
-    const markup = render();
-    expect(markup).toContain("See the rules it checks against");
   });
 });
 
@@ -425,9 +423,9 @@ describe("Mechanism marks", () => {
 
     // The marks are aria-hidden decorative elements. Check for their presence
     // in the full landing page. We expect multiple aria-hidden elements:
-    // section numerals (01, 02, 03, 04) plus the three mechanism marks.
+    // section numerals (01, 02, 03, 04, 05) plus the three mechanism marks.
     const ariaHiddenCount = (markup.match(/aria-hidden="true"/g) || []).length;
-    expect(ariaHiddenCount).toBeGreaterThanOrEqual(7);
+    expect(ariaHiddenCount).toBeGreaterThanOrEqual(8);
   });
 
   it("marks all mechanism drawings as aria-hidden", () => {

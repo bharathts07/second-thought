@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 /**
  * The composer: the draft field, the ghost hint, the status line, the example
  * replies and the send control.
@@ -50,6 +52,7 @@ const COPY = {
     "Full checking isn't available in this browser. The simple checks are still running.",
   downloading: "Downloading. Nothing you type is being sent.",
   howDoIKnow: "How do I know?",
+  seeRules: "See the rules this checks against",
   runningOn: "Running on",
   /**
    * "since the checker was ready", NOT "since loading", and the distinction is the
@@ -625,6 +628,17 @@ export function Composer({
             {line.kind === "ready" && line.device !== undefined && line.requestCount !== undefined ? (
               <StatusDisclosure device={line.device} requestCount={line.requestCount} />
             ) : null}
+            {/*
+              The pointer to the rules, reachable at the moment of typing. Quiet and
+              plainly worded, so it is available without competing with the guidance
+              or the send control.
+            */}
+            <Link
+              href="/settings"
+              className="text-xs text-ink-muted underline decoration-hairline underline-offset-2 transition-control hover:text-ink hover:decoration-control"
+            >
+              {COPY.seeRules}
+            </Link>
           </div>
           {line.detail ? (
             <p className="mt-1 max-w-reading text-xs text-ink-muted">{line.detail}</p>

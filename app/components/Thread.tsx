@@ -37,6 +37,56 @@ import { TypingIndicator } from "./TypingIndicator";
 /** Which of the two conversations is on screen. Two, not three: see RecipientSwitch. */
 export type ThreadMode = "internal" | "external";
 
+/**
+ * Common American first names for the demo participants.
+ *
+ * Bare first names with a role label beside them, never a surname and never a full
+ * name, because `content-safety.md` §2 requires that no person on this site can read
+ * as a specific real individual.
+ */
+const FIRST_NAMES = [
+  "Alex", "Jordan", "Taylor", "Morgan", "Casey", "Riley",
+  "Avery", "Quinn", "Sam", "Drew", "Jamie", "Reese",
+  "Blake", "Skylar", "Rowan", "Cameron",
+] as const;
+
+/**
+ * The pick is DERIVED from a build-time seed, never drawn here.
+ *
+ * `Math.random()` at this exact spot is the bug this replaces, and the comment that
+ * was here claimed it "avoids hydration mismatches entirely" because it runs at
+ * module scope rather than during render. Measured, that is backwards: this module is
+ * in the client bundle, so its module scope runs again in the browser and drew a
+ * second, different pair. The prerendered HTML said Skylar and Casey, the browser
+ * disagreed, and every page load logged React error #418.
+ *
+ * The seed comes from `next.config.ts`, which the bundler inlines as a literal into
+ * both the prerender and the client bundle, so there is nothing left for the two
+ * realms to disagree about. Names still change on every build.
+ *
+ * Anything non-deterministic here is the same bug again: no `Math.random()`, no
+ * `Date.now()`, nothing read from `window` or from a locale.
+ */
+const NAME_SEED = Number(process.env.NEXT_PUBLIC_NAME_SEED ?? 0);
+
+function pickName(offset: number, exclude: readonly string[] = []): string {
+  const available = FIRST_NAMES.filter((name) => !exclude.includes(name));
+  return available[(NAME_SEED + offset) % available.length];
+}
+
+/**
+ * The two participants. Exported so the thread data, the message authors, the
+ * recipient label and the canned replies in `replies.ts` all read the same pair: a
+ * reply signed by someone who is not in the conversation is worse than a hardcoded
+ * name.
+ *
+ * The second pick is offset and excludes the first, so the two are never the same
+ * person. A stride of 7 against a 16 then 15 item list keeps consecutive builds from
+ * landing on adjacent pairs.
+ */
+export const PARTICIPANT_INTERNAL = pickName(0);
+export const PARTICIPANT_EXTERNAL = pickName(7, [PARTICIPANT_INTERNAL]);
+
 export type Message = {
   id: string;
   from: string;
@@ -68,15 +118,15 @@ export type ThreadData = {
  */
 export const THREAD_EXTERNAL: ThreadData = {
   title: "Q3 evaluation",
-  participants: "You, Priya (your team), Sam (example.com)",
+  participants: `You, ${PARTICIPANT_INTERNAL} (your team), ${PARTICIPANT_EXTERNAL} (example.com)`,
   badge: "External · example.com",
   recipientKind: "external-domain",
-  recipientLabel: "Sam",
+  recipientLabel: PARTICIPANT_EXTERNAL,
   recipientDomain: "example.com",
   messages: [
     {
       id: "ext-1",
-      from: "Sam",
+      from: PARTICIPANT_EXTERNAL,
       label: "example.com",
       time: "10:02",
       text:
@@ -85,14 +135,14 @@ export const THREAD_EXTERNAL: ThreadData = {
     },
     {
       id: "ext-2",
-      from: "Priya",
+      from: PARTICIPANT_INTERNAL,
       label: "your team",
       time: "10:04",
       text: "Let me bring in the right person on that.",
     },
     {
       id: "ext-3",
-      from: "Sam",
+      from: PARTICIPANT_EXTERNAL,
       label: "example.com",
       time: "10:11",
       text: "No rush, but we do need it in writing before Thursday.",
@@ -103,25 +153,25 @@ export const THREAD_EXTERNAL: ThreadData = {
 /**
  * Thread B exists to make the internal state *legible*, and it gives the tone and
  * language rules somewhere real to fire. A visitor can type a harsh reply to
- * Priya and see a card, then type the residency promise and see silence, which
- * demonstrates per-rule scoping better than any copy could.
+ * the team member and see a card, then type the residency promise and see silence,
+ * which demonstrates per-rule scoping better than any copy could.
  */
 export const THREAD_INTERNAL: ThreadData = {
   title: "Platform team",
-  participants: "You, Priya (your team)",
+  participants: `You, ${PARTICIPANT_INTERNAL} (your team)`,
   recipientKind: "internal",
-  recipientLabel: "Priya",
+  recipientLabel: PARTICIPANT_INTERNAL,
   messages: [
     {
       id: "int-1",
-      from: "Priya",
+      from: PARTICIPANT_INTERNAL,
       label: "your team",
       time: "09:41",
       text: "I've pushed the revised migration plan, have a look when you get a chance.",
     },
     {
       id: "int-2",
-      from: "Priya",
+      from: PARTICIPANT_INTERNAL,
       label: "your team",
       time: "09:52",
       text: "Also, do you have a view on the rollout order?",

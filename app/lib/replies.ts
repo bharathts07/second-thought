@@ -39,7 +39,10 @@ export type ReplyRequest = {
   /** The message that was just sent, verbatim. */
   sent: string;
   recipientKind: RecipientKind;
-  /** Who is replying: `Sam` externally, `Priya` internally. */
+  /**
+   * Who is replying: the external participant externally, the internal participant
+   * internally. The names are chosen at build time in Thread.tsx.
+   */
   from: string;
   /** Prior message texts, oldest first. A model would condition on these. */
   history: readonly string[];

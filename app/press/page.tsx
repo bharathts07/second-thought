@@ -199,14 +199,14 @@ export default function PressPage() {
           <div className="flex flex-col gap-4">
             <ProseEyebrow>Press release</ProseEyebrow>
             <ProseTitle>
-              Know what you just promised, before you hit send.
+              Stay inside your company&rsquo;s rules, before you hit send.
             </ProseTitle>
             <ProseLead>
-              A customer is waiting. You have three minutes before your next
-              meeting. You type one sentence more confident than the company can
-              stand behind, and nobody notices until it becomes a contract
-              dispute months later. Second Thought catches that sentence while
-              it is still yours to change.
+              Your company has rules about what you can promise, what you can share,
+              and how you talk to people. When you are busy and someone is waiting,
+              they are easy to cross without noticing. Second Thought reads your draft
+              on your own computer, points out the line that could cause trouble, and
+              offers a safer way to say it.
             </ProseLead>
           </div>
 
@@ -236,260 +236,205 @@ export default function PressPage() {
             </Link>
           </div>
 
-          <ProseSection index="01" id="the-problem" title="The problem is human" spaceAbove="default">
+          <ProseSection index="01" id="the-gap" title="The gap is not the rule, it&rsquo;s the moment" spaceAbove="default">
             <ProseP>
-              Nobody sets out to over-promise. Someone is answering a customer
-              who is waiting, before a meeting, and they write one sentence more
-              confident than the company can stand behind. That sentence becomes
-              evidence when the relationship breaks down, which is exactly when
-              the person who typed it no longer works there or no longer
-              remembers the context.
+              Your company has rules about what you can promise, what data you can
+              share, how to talk about delivery dates and pricing. A compliance officer
+              somewhere has written the exact wording you should use when a customer
+              asks whether their data stays in one region. That wording is in a policy
+              PDF or an internal wiki. The person typing the reply has four minutes
+              before their next meeting. They are not going to open a policy document
+              and search for the relevant section.
             </ProseP>
             <ProseP>
-              Regulators have issued fines totalling over $3B since 2021 over how
-              business communications were kept and supervised. That figure is
-              worth stating once, and almost none of what sits behind it was
-              anyone being dishonest. The ordinary version is smaller and far
-              more common: a promise typed in four seconds, and everything slow
-              and expensive that follows is downstream of those four seconds.
+              Nobody sets out to break the rule. Someone is answering a customer who is
+              waiting, and they type one sentence more confident than the company can
+              stand behind. That sentence becomes evidence when the relationship breaks
+              down. Regulators have issued fines totalling over $3B since 2021 over how
+              business communications were kept and supervised, and most of what sits
+              behind that figure was not anyone being dishonest. The gap is not that the
+              rule does not exist. The gap is that it exists in the wrong place.
             </ProseP>
           </ProseSection>
 
           <ProseSection
             index="02"
-            id="the-rules-exist"
-            title="The rules already exist"
+            id="the-moment"
+            title="Put the rule where you are typing"
             spaceAbove="large"
           >
             <ProseP>
-              Your company already knows you cannot promise guaranteed uptime
-              without checking the SLA. It knows you cannot offer a discount
-              without approval. It knows a customer conversation is not meant to
-              move somewhere unrecorded. A compliance officer somewhere
-              has written exactly the wording you should use when a customer asks
-              whether their data stays in one region.
+              The useful moment is before the message leaves. Second Thought sits under
+              the composer and says nothing until a sentence is worth reconsidering. When
+              one is, a card appears with the rule in plain language, the reason that
+              phrasing is risky, and suggested wording you can take with one click or
+              leave alone. Nothing is held back from sending.
             </ProseP>
             <ProseP>
-              That wording is in a policy PDF, or an internal wiki page, or a deck
-              from a training session two years ago. The person typing the reply
-              has four minutes before their next meeting. They are not going to
-              open a policy document, search for the relevant section, and then
-              come back to finish the sentence.
+              The checking happens on your own machine. There is no version of this where
+              someone reads your drafts. That is not a promise to trust; it is a property
+              of how it is built. The checks run inside your browser. There is no server
+              that could receive what you type.
             </ProseP>
             <ProseP>
-              A rule that requires that much friction to consult is a rule that
-              does not get consulted. The gap is not that the rule does not
-              exist. The gap is that it exists in the wrong place.
+              The gesture that explains it takes two seconds: switch the recipient from
+              your own team to a customer, leave the draft as it is, and watch what it
+              flags change. <TextLink href="/">Try it in this browser</TextLink>.
             </ProseP>
           </ProseSection>
 
-          <ProseSection
-            index="03"
-            id="the-moment"
-            title="Put the rule at the moment of writing"
-            spaceAbove="default"
-          >
+          <ProseSection index="03" id="how-it-works" title="How it works" spaceAbove="extra">
             <ProseP>
-              The useful moment is before the message leaves, while the sentence
-              is still yours to change. Second Thought sits under the composer
-              and says nothing at all until a sentence is worth reconsidering.
-              When one is, a card appears with the rule in plain language, the
-              reason that phrasing is risky, and suggested wording you can take
-              with one click or leave alone. Nothing is ever held back from
-              sending.
+              The checker runs inside your browser tab. The first time you visit, it
+              downloads once and stays in your browser cache. After that, every check
+              happens on your own device with nothing sent anywhere.
             </ProseP>
             <ProseP>
-              And because the checking happens on your own machine, there is no
-              version of this where someone reads your drafts. That is not a
-              promise to trust; it is a property of how it is built. The checks
-              run inside your browser. There is no server that could receive what
-              you type.
+              A scan runs in stages, cheapest first. A context gate decides which rules
+              apply to this recipient. A deterministic stage runs patterns and literal
+              terms over the raw draft; it needs no external service, so the page is
+              already working in its first second while the rest downloads.
             </ProseP>
             <ProseP>
-              The timing is the point. Everything else in this space works after
-              the fact, by keeping and reviewing messages that have already been
-              sent. That is useful for records and useless to the person about to
-              send one. The interesting moment is before.
-            </ProseP>
-            <ProseP>
-              The gesture that explains the product takes about two seconds:
-              switch the recipient from your own team to a customer, leave the
-              draft exactly as it is, and watch what it flags change.{" "}
-              <TextLink href="/">Try it in this browser</TextLink>.
-            </ProseP>
-          </ProseSection>
-
-          <ProseSection index="04" id="how-it-works" title="How it works" spaceAbove="extra">
-            <ProseP>
-              The checker runs inside your browser tab. The first time you visit,
-              it downloads once and stays in your browser cache. After that, every
-              check happens on your own device with nothing sent anywhere.
-            </ProseP>
-            <ProseP>
-              A scan runs in stages, cheapest first. A context gate decides which
-              rules apply to this recipient at all. A deterministic stage then
-              runs patterns and literal terms over the raw draft; it needs no
-              external service, so the page is already doing something useful in
-              its first second while the rest is still downloading.
-            </ProseP>
-            <ProseP>
-              Only then does the meaning-based stage run, and a rule fires there
-              only when a cue phrase is present, no negation governs that cue, and
-              the sentence clears that rule&rsquo;s similarity bar against its
-              examples. All three conditions are needed. The checker encodes topic
-              and vocabulary far more strongly than stance, so{" "}
+              The meaning-based stage runs only when a cue phrase is present, no negation
+              governs that cue, and the sentence clears that rule&rsquo;s similarity bar
+              against its examples. All three conditions are needed. The checker encodes
+              topic and vocabulary far more strongly than stance, so{" "}
               <em>we cannot guarantee your data never leaves the US</em> scores{" "}
               <span className="font-ui tabular-nums">0.978</span> against the
               data-residency examples while the actual promise scores{" "}
-              <span className="font-ui tabular-nums">0.964</span>. Similarity on
-              its own would put a card under the most careful sentence in the
-              draft.
+              <span className="font-ui tabular-nums">0.964</span>. Similarity alone would
+              put a card under the most careful sentence in the draft.
             </ProseP>
           </ProseSection>
 
           <ProseSection
-            index="05"
+            index="04"
             id="why-local"
             title="Why it runs on your machine"
             spaceAbove="large"
           >
             <ProseP>
-              This is a design constraint rather than a feature that was added
-              later. The reasoning below is about why this product is built this
-              way. None of it is a claim about anyone else&rsquo;s software, and
-              none of it is legal advice.
+              This is a design constraint rather than a feature added later. The reasoning
+              below is about why this product is built this way. None of it is a claim
+              about anyone else&rsquo;s software, and none of it is legal advice.
             </ProseP>
             <ProseP>
-              Section 7 of the NLRA protects most private-sector employees
-              discussing pay and working conditions. Regulators have at times
-              pressed for heightened scrutiny of monitoring technology on that
-              basis; the specific NLRB General Counsel guidance from 2022 was
-              rescinded in February 2025, and enforcement posture here moves with each
-              administration, which is exactly why we did not want the
-              architecture to depend on it.
+              Section 7 of the NLRA protects most private-sector employees discussing pay
+              and working conditions. Regulators have at times pressed for heightened
+              scrutiny of monitoring technology on that basis; the specific NLRB General
+              Counsel guidance from 2022 was rescinded in February 2025, and enforcement
+              posture here moves with each administration, which is exactly why we did not
+              want the architecture to depend on it.
             </ProseP>
             <ProseP>
-              In Germany, §87(1)(6) BetrVG gives a works council, where one
-              exists, co-determination over technical devices for monitoring
-              behaviour or performance, and German case law reads capability
-              rather than intent as the trigger. Under EU and UK data-protection
-              law, monitoring employee messages is the kind of processing
-              supervisory authorities treat as likely high-risk, so a DPIA is
-              normally required, and employee consent is a weak basis because of
-              the power imbalance.
+              In Germany, §87(1)(6) BetrVG gives a works council, where one exists,
+              co-determination over technical devices for monitoring behaviour or
+              performance, and German case law reads capability rather than intent as the
+              trigger. Under EU and UK data-protection law, monitoring employee messages
+              is the kind of processing supervisory authorities treat as likely high-risk,
+              so a DPIA is normally required, and employee consent is a weak basis because
+              of the power imbalance.
             </ProseP>
             <ProseCallout>
               <p>
-                So: nothing you type leaves your computer, there is no endpoint
-                that could receive it, there is no console showing anyone what anyone
-                typed, there are no per-person scores, and the rule set excludes
-                pay, hours, working conditions, and organizing by construction.
+                So: nothing you type leaves your computer, there is no endpoint that could
+                receive it, there is no console showing anyone what anyone typed, there
+                are no per-person scores, and the rule set excludes pay, hours, working
+                conditions, and organizing by construction.
               </p>
             </ProseCallout>
             <ProseP>
-              None of that is a policy you have to take on trust. The site is a
-              set of static files, its content security policy permits
-              connections to this origin and nowhere else, and the network tab is
-              the entire audit: after the one-time download there is nothing
-              further to see.
+              None of that is a policy you have to take on trust. The site is a set of
+              static files, its content security policy permits connections to this origin
+              and nowhere else, and the network tab is the entire audit.
             </ProseP>
           </ProseSection>
 
           <ProseSection
-            index="06"
+            index="05"
             id="not-built"
             title="What is deliberately not built"
             spaceAbove="default"
           >
             <ProseList>
               <ProseListItem>
-                <strong>No console.</strong> There is no view where anyone could
-                read what you typed. That is not a permission left switched off;
-                the surface does not exist.
+                <strong>No console.</strong> There is no view where anyone could read
+                what you typed. That is not a permission left switched off; the surface
+                does not exist.
               </ProseListItem>
               <ProseListItem>
-                <strong>No telemetry of any kind.</strong> No analytics, no crash
-                reporting, no counters. The status line under the composer counts
-                anything that leaves the page after the checker is ready, and it
-                reads zero because there is nothing to send.
+                <strong>No telemetry of any kind.</strong> The status line under the
+                composer counts anything that leaves the page after the checker is ready,
+                and it reads zero because there is nothing to send.
               </ProseListItem>
               <ProseListItem>
-                <strong>Eight rules rather than eighty.</strong> Every additional
-                rule is additional surface for false positives, and false
-                positives are what get a tool like this switched off in the first
-                week.
+                <strong>Eight rules rather than eighty.</strong> Every additional rule
+                is additional surface for false positives, and false positives are what
+                get a tool like this switched off in the first week.
               </ProseListItem>
               <ProseListItem>
-                <strong>No holding anything back.</strong> It advises and never
-                refuses. The reviewed wording is offered first and a generated
-                version second, never preselected, because a suggestion that
-                applies itself has stopped being a suggestion.
+                <strong>No holding anything back.</strong> It advises and never refuses.
+                The reviewed wording is offered first and a generated version second,
+                never preselected.
               </ProseListItem>
             </ProseList>
           </ProseSection>
 
-          <ProseSection index="07" id="the-rules" title="The rules, in full" spaceAbove="extra">
+          <ProseSection index="06" id="the-rules" title="The rules, in full" spaceAbove="extra">
             <ProseP>
-              Eight rules ship in the demo. Six of them apply only when the
-              recipient is outside your company, which is what makes the
-              recipient switch mean something; tone and language apply
-              everywhere, because how a sentence lands does not depend on the
-              domain in the address.
+              Eight rules ship in the demo. Six apply only when the recipient is outside
+              your company, which is what makes the recipient switch mean something. Tone
+              and language apply everywhere, because how a sentence lands does not depend
+              on the domain in the address.
             </ProseP>
             <ProseFigure label="The eight rules, their severities and their scope">
               <RulesTable />
-              {/* At 390px the last two columns sit off the right edge, and a
-                  scroll region with no affordance is a column a reader never
-                  learns exists. Visible only where the table actually scrolls. */}
               <p className="mt-3 text-xs text-ink-muted sm:hidden">
                 The table scrolls sideways here to reach scope and precision.
               </p>
               <ProseFigureNote>
-                No rule here has a published precision figure. Every rule is still
-                tuned by guesswork rather than by measurement, and none has been
-                scored against a held-out sample, so the honest entry is that it is not yet measured out of
-                sample. An in-sample number would look precise and would be the
-                least true thing on this site.
+                No rule here has a published precision figure. Every rule is still tuned
+                by guesswork rather than by measurement, and none has been scored against
+                a held-out sample, so the honest entry is that it is not yet measured out
+                of sample. An in-sample number would look precise and would be the least
+                true thing on this site.
               </ProseFigureNote>
             </ProseFigure>
           </ProseSection>
 
-          <ProseSection index="08" id="roadmap" title="What comes next" spaceAbove="large">
+          <ProseSection index="07" id="roadmap" title="What comes next" spaceAbove="large">
             <ProseSubheading>
               The same checks inside the tools teams already use
             </ProseSubheading>
             <ProseP>
-              The composer on this site is a demonstration. The intended form is
-              a browser extension, with the checker staying inside the extension
-              and the draft never leaving the page it was typed on. The ceiling
-              is worth naming in the same breath: that layer advises, it is
-              bypassable, and going from advice to enforcement would mean a
-              managed-browser integration rather than a content script. We would
-              only build that for someone who asked for enforcement rather than
-              coaching.
+              The composer on this site is a demonstration. The intended form is a browser
+              extension, with the checker staying inside the extension and the draft never
+              leaving the page it was typed on. That layer advises and is bypassable.
+              Going from advice to enforcement would mean a managed-browser integration
+              rather than a content script, and we would only build that for someone who
+              asked for enforcement rather than coaching.
             </ProseP>
             <ProseSubheading>
               Policy authoring, with a precision harness in front of it
             </ProseSubheading>
             <ProseP>
-              Writing a rule should not be the same act as switching it on. The
-              next version measures a candidate rule&rsquo;s false-positive rate
-              against a sample corpus before it can go live, which today is a
-              build technique and belongs in the product.
+              Writing a rule should not be the same act as switching it on. The next
+              version measures a candidate rule&rsquo;s false-positive rate against a
+              sample corpus before it can go live.
             </ProseP>
             <ProseSubheading>A distilled, task-specific classifier</ProseSubheading>
             <ProseP>
-              A smaller classifier trained for this exact task would be faster
-              and more accurate than similarity against examples. It is not in
-              this version for a plain reason: training only on synthetic data
-              bakes in the trainer&rsquo;s blind spots, and offline evaluation
-              then flatters you because the test set is synthetic too. The gating
-              requirement is a human-adjudicated gold set drawn from real drafts,
-              and that does not exist on day one.
+              A smaller classifier trained for this exact task would be faster and more
+              accurate than similarity against examples. It is not in this version for a
+              plain reason: training only on synthetic data bakes in the trainer&rsquo;s
+              blind spots, and offline evaluation then flatters you because the test set
+              is synthetic too. The gating requirement is a human-adjudicated gold set
+              drawn from real drafts, and that does not exist on day one.
             </ProseP>
           </ProseSection>
 
-          <ProseSection index="09" id="disclaimer" title="One last thing" spaceAbove="large">
+          <ProseSection index="08" id="disclaimer" title="One last thing" spaceAbove="large">
             <ProseCallout tone="quiet">
               <p className="font-ui text-sm">{COPY.disclaimer}</p>
             </ProseCallout>

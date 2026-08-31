@@ -1,9 +1,10 @@
 /**
  * The landing page above the seam: introduction to the product for a new visitor.
  *
- * Five parts, in order: hero, 01 (nobody sets out to over-promise), 02 (a note in
- * the margin), 03 (the demo, the seam itself), and 04 (you do not have to take our
- * word for it). The hero carries no numeral; editorial sections are 01 to 04.
+ * Six parts, in order: hero, 01 (nobody sets out to break a rule), 02 (it works for
+ * you, not on you), 03 (a note in the margin), 04 (the demo, the seam itself), and
+ * 05 (you do not have to take our word for it). The hero carries no numeral;
+ * editorial sections are 01 to 05.
  *
  * **Brand register above the seam, product register below it.** The two halves use
  * different typefaces, and the change happens at the seam where the argument stops
@@ -13,7 +14,7 @@
  * reading and started using" without a word of instruction.
  *
  * **The design language is called Marginalia.** A second thought is a margin note you
- * write to yourself before you send. Paper ground, one annotation plum used only for
+ * write to yourself before you send. Paper ground, one annotation blue used only for
  * marks and state, hairline margin rules, numbered editorial sections, and the pause
  * (an ellipsis) as the recurring motif. Use those words in comments.
  *
@@ -44,18 +45,22 @@ import { ReadingMark, NoteMark, ChoiceMark } from "./Marks";
 /** Copy transcribed from the spec. Checked against the banned list. */
 const COPY = {
   wordmark: "Second Thought",
-  h1: "Know what you just promised, before you hit send.",
+  h1: "A second thought, before you hit send.",
   lead:
-    "You are answering a customer, quickly. Second Thought reads your draft on your own " +
-    "computer and tells you when a sentence promises more than your company can stand behind.",
+    "Your company has rules about what you can promise, what you can share, and how you talk to " +
+    "people. When someone is waiting, they are easy to cross without noticing. Second Thought " +
+    "reads your draft on your own computer, points out the line that could cause trouble, and " +
+    "offers a safer way to say it.",
   primaryCta: "Try it",
   secondaryCta: "Read the press release",
-  privacyNote: "Nothing you type is sent anywhere.",
+  privacyNote: "It runs on your computer. Nobody else sees what you type.",
 
-  section01Heading: "Nobody sets out to over-promise",
+  section01Heading: "Nobody sets out to break a rule",
   section01P1:
     "A customer is waiting. You have three minutes before your next meeting. You write one " +
-    "sentence more confident than your company can actually stand behind, and nobody notices.",
+    "sentence that crosses a line, and nobody notices. It might be a promise your company cannot " +
+    "stand behind, a price or date you cannot commit to, a sharp word about a colleague, or an " +
+    "offer to move the conversation somewhere it will not be recorded.",
   section01P2:
     "Months later that sentence is the thing being quoted back, in a room where nobody " +
     "remembers the context and the person who typed it may not even work there any more.",
@@ -64,44 +69,61 @@ const COPY = {
     "place for a rule and the wrong place for it at the moment you are typing. Nobody opens a " +
     "policy document mid-sentence.",
 
-  section02Heading: "A note in the margin, before you send",
+  section02Heading: "It works for you, not on you",
   section02P1:
-    "Three moves. When a sentence promises more than your company can stand behind, guidance " +
-    "appears attached to the words it is about, with a way to say it that keeps your meaning.",
-  section02Move1Title: "It reads the draft as you type",
-  section02Move1Body: "On your own computer, as you write. There is nothing to turn on and nothing to send off.",
-  section02Move2Title: "It puts the note under the sentence",
-  section02Move2Body:
-    "When a sentence promises more than your company can stand behind, guidance appears attached " +
-    "to the words it is about, with a way to say it that keeps your meaning.",
-  section02Move3Title: "You decide",
-  section02Move3Body:
+    "The person who gets in trouble is the person who typed the sentence. Almost everything in " +
+    "this space is built for the employer and reviews messages after they are sent. This is " +
+    "built for the person writing, before.",
+  section02P2:
+    "It runs on your own machine. There is no console showing anyone what you wrote, no " +
+    "reporting on anyone, nothing kept. It never blocks a message, because the person sending " +
+    "it is the one who decides.",
+  section02P3:
+    "And the rule set deliberately does not look at pay, hours, working conditions or " +
+    "organising, which is enforced in code rather than promised in prose. Protecting the " +
+    "employer and protecting the employee are the same job here, and the employee is the one " +
+    "standing closest to the risk.",
+
+  section03Heading: "A note in the margin, before you send",
+  section03P1:
+    "Three moves. When a sentence could cause trouble, guidance appears attached to the words " +
+    "it is about, with a way to say it that keeps your meaning.",
+  section03Move1Title: "It reads the draft as you type",
+  section03Move1Body: "On your own computer, as you write. There is nothing to turn on and nothing to send off.",
+  section03Move2Title: "It puts the note under the sentence",
+  section03Move2Body:
+    "When a sentence could cause trouble, guidance appears attached to the words it is about, " +
+    "with a way to say it that keeps your meaning.",
+  section03Move3Title: "You decide",
+  section03Move3Body:
     "Take the suggested wording or keep your own. It never blocks a message, and it never tells " +
     "anyone what you wrote.",
 
-  section03Heading: "Try it",
-  section03Seam:
+  section04Heading: "Try it",
+  section04Seam:
     "That is the argument. This is the working thing, running here in this page. Answer Sam's " +
     "question, and watch what happens when you promise something specific.",
-  section03Harness:
+  section04Harness:
     "This conversation is a demo surface built to show the checker. The intended form is an " +
     "extension for the tools your team already use.",
-  section03RulesPointer: "See the rules it checks against",
 
-  section04Heading: "You do not have to take our word for it",
-  section04P1:
+  section05Heading: "You do not have to take our word for it",
+  section05P1:
     "Let the page finish getting ready, then turn your network off and keep typing. The checking " +
     "keeps working, because the checker is already on your machine and there is no server that " +
     "could receive a draft.",
-  section04Eyebrow: "What it does not do",
-  section04Limit1:
+  section05Eyebrow: "What it does not do",
+  section05Limit1:
     "It never stops you sending anything. It is advisory, and every note can be dismissed.",
-  section04Limit2:
+  section05Limit2:
     "Its accuracy has not been measured yet. The rules are tuned by judgement rather than by " +
     "evidence, and we will not publish a number we have not earned.",
-  section04Limit3:
-    "Eight rules, and they are a demonstration of the idea rather than a compliance programme.",
-  section04Limit4: "English only, one surface, and no console, no telemetry, no reporting on anyone.",
+  section05Limit3:
+    "Eight rules, and they are a demonstration of the idea rather than a compliance programme. " +
+    "They cover what you can promise about security and data residency, delivery dates, pricing " +
+    "and discounts, moving a conversation somewhere unrecorded, personal criticism of a " +
+    "colleague, and strong language.",
+  section05Limit4: "English only, one surface, and no console, no telemetry, no reporting on anyone.",
 
   disclaimer:
     "Second Thought is a drafting aid. It does not provide legal or compliance advice and " +
@@ -257,12 +279,13 @@ export function Landing({ demoSlot }: { demoSlot: ReactNode }) {
   return (
     <div className="flex flex-col">
       {/* Hero: no section numeral. Two columns at >=1024px (words left, artifact
-          right), stacking below 1024px. The artifact must stay legible at 390px. */}
+          right), stacking below 1024px. The artifact must stay legible at 390px.
+          Using widened layout tokens for breathing room. */}
       <section className="flex flex-col gap-rhythm-section py-12 sm:py-16">
-        <div className="flex flex-col gap-rhythm-section lg:grid lg:grid-cols-2 lg:items-start lg:gap-8">
+        <div className="flex flex-col gap-rhythm-section lg:grid lg:grid-cols-2 lg:items-start lg:gap-12">
           {/* Left column: the words */}
           <div className="flex flex-col gap-6">
-            <div className="flex max-w-reading flex-col gap-4">
+            <div className="flex flex-col gap-4">
               {/* No `whitespace-nowrap`. It was added to keep the wordmark on one line
                   at 1280 and it measurably broke the layout instead: the hero column is
                   328px there and the wordmark needs about 330px at this size, so forcing
@@ -276,7 +299,7 @@ export function Landing({ demoSlot }: { demoSlot: ReactNode }) {
               <p className="font-serif text-2xl font-medium text-ink sm:text-3xl">
                 {COPY.h1}
               </p>
-              <p className="font-serif text-lg text-ink-secondary sm:text-xl">
+              <p className="max-w-reading font-serif text-lg text-ink-secondary sm:text-xl">
                 {COPY.lead}
               </p>
             </div>
@@ -306,7 +329,8 @@ export function Landing({ demoSlot }: { demoSlot: ReactNode }) {
 
       <MarginRule />
 
-      {/* Section 01: the problem. Serif prose in brand register. */}
+      {/* Section 01: the problem, broadened beyond over-promising. Serif prose in
+          brand register. */}
       <section className="flex flex-col gap-6 py-rhythm-section">
         <div className="flex items-start gap-4 sm:gap-6">
           <SectionNumeral>01</SectionNumeral>
@@ -323,17 +347,37 @@ export function Landing({ demoSlot }: { demoSlot: ReactNode }) {
 
       <MarginRule />
 
-      {/* Section 02: how it works. Three numbered moves, still brand register.
-          Each move has a mechanism mark showing the mechanism itself. */}
-      <section className="flex flex-col gap-6 py-rhythm-block">
+      {/* Section 02: NEW - it works for you, not on you. The most important section.
+          This is what makes the product different: it protects the employee first,
+          runs on their machine, never reports on anyone, and deliberately excludes
+          labor relations. Still brand register, serif prose. */}
+      <section className="flex flex-col gap-6 py-rhythm-section">
         <div className="flex items-start gap-4 sm:gap-6">
           <SectionNumeral>02</SectionNumeral>
           <h2 className="font-serif text-2xl font-semibold text-ink sm:text-3xl">
             {COPY.section02Heading}
           </h2>
         </div>
+        <div className="flex max-w-reading flex-col gap-4 font-serif text-base text-ink-secondary sm:text-lg">
+          <p>{COPY.section02P1}</p>
+          <p>{COPY.section02P2}</p>
+          <p>{COPY.section02P3}</p>
+        </div>
+      </section>
+
+      <MarginRule />
+
+      {/* Section 03: how it works. Three numbered moves, still brand register.
+          Each move has a mechanism mark showing the mechanism itself. */}
+      <section className="flex flex-col gap-6 py-rhythm-block">
+        <div className="flex items-start gap-4 sm:gap-6">
+          <SectionNumeral>03</SectionNumeral>
+          <h2 className="font-serif text-2xl font-semibold text-ink sm:text-3xl">
+            {COPY.section03Heading}
+          </h2>
+        </div>
         <p className="max-w-reading font-serif text-base text-ink-secondary sm:text-lg">
-          {COPY.section02P1}
+          {COPY.section03P1}
         </p>
         <ol className="flex max-w-reading flex-col gap-5">
           <li className="flex gap-4">
@@ -343,10 +387,10 @@ export function Landing({ demoSlot }: { demoSlot: ReactNode }) {
             <ReadingMark />
             <div className="flex flex-col gap-1">
               <p className="font-serif text-base font-semibold text-ink">
-                {COPY.section02Move1Title}
+                {COPY.section03Move1Title}
               </p>
               <p className="font-serif text-base text-ink-secondary">
-                {COPY.section02Move1Body}
+                {COPY.section03Move1Body}
               </p>
             </div>
           </li>
@@ -357,10 +401,10 @@ export function Landing({ demoSlot }: { demoSlot: ReactNode }) {
             <NoteMark />
             <div className="flex flex-col gap-1">
               <p className="font-serif text-base font-semibold text-ink">
-                {COPY.section02Move2Title}
+                {COPY.section03Move2Title}
               </p>
               <p className="font-serif text-base text-ink-secondary">
-                {COPY.section02Move2Body}
+                {COPY.section03Move2Body}
               </p>
             </div>
           </li>
@@ -371,10 +415,10 @@ export function Landing({ demoSlot }: { demoSlot: ReactNode }) {
             <ChoiceMark />
             <div className="flex flex-col gap-1">
               <p className="font-serif text-base font-semibold text-ink">
-                {COPY.section02Move3Title}
+                {COPY.section03Move3Title}
               </p>
               <p className="font-serif text-base text-ink-secondary">
-                {COPY.section02Move3Body}
+                {COPY.section03Move3Body}
               </p>
             </div>
           </li>
@@ -383,27 +427,22 @@ export function Landing({ demoSlot }: { demoSlot: ReactNode }) {
 
       <MarginRule />
 
-      {/* Section 03: the seam. This is where brand register ends and product
+      {/* Section 04: the seam. This is where brand register ends and product
           register begins. The argument stops, the demo starts, and the typeface
-          changes under the reader. */}
+          changes under the reader. Rules pointer removed: now reachable from the
+          composer itself. */}
       <section className="flex flex-col gap-6 py-rhythm-page">
         <div id="try" className="flex items-start gap-4 sm:gap-6">
-          <SectionNumeral>03</SectionNumeral>
+          <SectionNumeral>04</SectionNumeral>
           <h2 className="font-serif text-2xl font-semibold text-ink sm:text-3xl">
-            {COPY.section03Heading}
+            {COPY.section04Heading}
           </h2>
         </div>
         <div className="flex max-w-reading flex-col gap-4">
           <p className="font-serif text-base text-ink-secondary sm:text-lg">
-            {COPY.section03Seam}
+            {COPY.section04Seam}
           </p>
-          <p className="text-sm text-ink-muted">{COPY.section03Harness}</p>
-          <Link
-            href="/settings"
-            className="text-sm text-accent-strong underline decoration-hairline underline-offset-2 transition-control hover:decoration-control"
-          >
-            {COPY.section03RulesPointer}
-          </Link>
+          <p className="text-sm text-ink-muted">{COPY.section04Harness}</p>
         </div>
 
         {/* The demo slot. The live product, exactly the components that are there
@@ -414,46 +453,48 @@ export function Landing({ demoSlot }: { demoSlot: ReactNode }) {
 
       <MarginRule />
 
-      {/* Section 04: the limits. What it does not do. Still product register. */}
+      {/* Section 05: the limits. What it does not do. Still product register.
+          Broadened to match the new positioning: covers all eight rules, not just
+          over-promising. */}
       <section className="flex flex-col gap-6 py-rhythm-section">
         <div className="flex items-start gap-4 sm:gap-6">
-          <SectionNumeral>04</SectionNumeral>
+          <SectionNumeral>05</SectionNumeral>
           <h2 className="text-2xl font-semibold text-ink sm:text-3xl">
-            {COPY.section04Heading}
+            {COPY.section05Heading}
           </h2>
         </div>
         <div className="flex max-w-reading flex-col gap-5">
           <p className="text-base text-ink-secondary sm:text-lg">
-            {COPY.section04P1}
+            {COPY.section05P1}
           </p>
           <div className="flex flex-col gap-4">
             <p className="text-xs font-medium uppercase tracking-label text-ink-muted">
-              {COPY.section04Eyebrow}
+              {COPY.section05Eyebrow}
             </p>
             <ul className="flex flex-col gap-3 text-sm text-ink-secondary">
               <li className="flex gap-2">
                 <span className="shrink-0" aria-hidden="true">
                   -
                 </span>
-                <span>{COPY.section04Limit1}</span>
+                <span>{COPY.section05Limit1}</span>
               </li>
               <li className="flex gap-2">
                 <span className="shrink-0" aria-hidden="true">
                   -
                 </span>
-                <span>{COPY.section04Limit2}</span>
+                <span>{COPY.section05Limit2}</span>
               </li>
               <li className="flex gap-2">
                 <span className="shrink-0" aria-hidden="true">
                   -
                 </span>
-                <span>{COPY.section04Limit3}</span>
+                <span>{COPY.section05Limit3}</span>
               </li>
               <li className="flex gap-2">
                 <span className="shrink-0" aria-hidden="true">
                   -
                 </span>
-                <span>{COPY.section04Limit4}</span>
+                <span>{COPY.section05Limit4}</span>
               </li>
             </ul>
           </div>
