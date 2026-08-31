@@ -66,7 +66,7 @@ import {
   hasGuidanceContent,
   orderedFindings,
 } from "@/app/components/GuidancePanel";
-import { FramingStrip } from "@/app/components/FramingStrip";
+import { Landing } from "@/app/components/Landing";
 import { PendingDraft } from "@/app/components/PendingDraft";
 import type { RemediationOption } from "@/app/components/FindingCard";
 
@@ -126,8 +126,6 @@ export default function Home() {
   const [notes, setNotes] = useState<readonly Message[]>([]);
   /** Which thread has somebody writing back, or null. */
   const [typingIn, setTypingIn] = useState<ThreadMode | null>(null);
-  /** The framing strip. Open on arrival, closed for good after the first gesture. */
-  const [framingOpen, setFramingOpen] = useState(true);
   /**
    * Forces a re-scan when the draft itself did not change: after an accept whose
    * target had already gone, and after a `Remove it` that produced identical text.
@@ -201,15 +199,14 @@ export default function Home() {
   /**
    * The first gesture, whatever it was.
    *
-   * It collapses the framing strip and it turns on the follow-the-conversation
-   * scroll. Both are the same idea: before the first keystroke the visitor is
-   * reading the page, and after it they are working in it. Scrolling a visitor who
-   * has not typed anything would hide the one thing that explains the product.
+   * It turns on the follow-the-conversation scroll: before the first keystroke the
+   * visitor is reading the page, and after it they are working in it. Scrolling a
+   * visitor who has not typed anything would hide the landing sections that explain
+   * the product.
    */
   const noteInteraction = useCallback(() => {
     if (interacted.current) return;
     interacted.current = true;
-    setFramingOpen(false);
   }, []);
 
   /**
@@ -619,102 +616,76 @@ export default function Home() {
     </div>
   );
 
+  /**
+   * The demo slot: the live product that goes inside the landing page at section 03.
+   * Everything the visitor interacts with: thread, recipient switch, pending draft,
+   * composer, and notes. The type changes from serif to system stack at this point.
+   */
+  const demoSlot = (
+    <>
+      <Thread
+        thread={thread}
+        onReset={handleReset}
+        typingFrom={typingIn === mode ? thread.recipientLabel : undefined}
+        pending={pending}
+      >
+        <RecipientSwitch mode={mode} onChange={handleSwitch} />
+      </Thread>
+
+      {/*
+        The composer's furniture: the example replies, the send control and the
+        status line. The field itself is up in the pending draft surface.
+
+        **Not sticky, and that is the fix rather than an omission.** Sticky at
+        `bottom-0`, this block was lifted out of its own place in the document and
+        painted over whatever was behind it, which at 1280x900 was the guidance:
+        the surface ran to y=1072 while the bar sat at y=604..678, so `Use this`
+        and `Keep mine` were underneath it. Reserving space for it instead would
+        have kept a bar whose only remaining reason to be pinned had already gone:
+        it was pinned so the FIELD could not move under a live cursor, and the
+        field is not in it any more. What is left is a row of buttons and a status
+        line, none of which the visitor is mid-gesture in, and none of which is
+        worth covering an accept button for.
+      */}
+      <div className="mt-8 border-t border-hairline pt-4">
+        <Composer
+          mode={mode}
+          status={status}
+          requestsSinceReady={requestsSinceReady}
+          findings={shown}
+          /* The same `hasDraft` the guidance zone reads, so the send control and
+             the guidance can never disagree about whether there is a draft. It is
+             also the exact condition `handleSend` bails on, which is what makes
+             the disabled state honest rather than decorative. */
+          draftEmpty={!hasDraft}
+          onInsert={handleInsert}
+          onSend={handleSend}
+        />
+      </div>
+
+      {/* The concrete answer to "so how would anyone ever know?": a record can
+          exist for the sender without existing for anyone else. Memory only,
+          gone on reload, recorded nowhere (T4.7.3). */}
+      {notes.length > 0 ? (
+        <section className="mt-8 border-t border-hairline pt-4">
+          <h2 className="text-sm font-medium text-ink">{COPY.notesHeading}</h2>
+          <p className="mt-1 text-xs text-ink-muted">{COPY.notesDisclaimer}</p>
+          <ul className="mt-3 flex flex-col gap-2">
+            {notes.map((note) => (
+              <li key={note.id} className="text-sm text-ink-secondary">
+                <span className="font-mono text-2xs text-ink-muted">{note.time}</span>{" "}
+                {note.text}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+    </>
+  );
+
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-app flex-col px-4 sm:px-6">
-      {/* No channel sidebar: it is the layout signature of specific commercial
-          products and it is unnecessary here (T4.1.6). */}
-      {/* The header is chrome and nothing else now. What the product is belongs in
-          the framing strip below, next to the conversation it is talking about,
-          where a new visitor is actually looking. */}
-      <header className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 pt-6 pb-5 sm:pt-10">
-        <p className="text-lg font-semibold tracking-tight text-ink">{COPY.title}</p>
-        <nav aria-label="Site" className="flex items-center gap-4 text-sm text-ink-secondary">
-          <Link href="/press" className="transition-control hover:text-ink hover:underline">
-            Press
-          </Link>
-          {/* `Rules` means nothing to a first-time visitor, which is why the
-              framing strip and every finding also carry a worded way in. It stays
-              in the nav for the visitor who already knows what it is. */}
-          <Link href="/settings" className="transition-control hover:text-ink hover:underline">
-            Rules
-          </Link>
-          <a
-            href="https://github.com/bharathts07/second-thought"
-            className="transition-control hover:text-ink hover:underline"
-            rel="noreferrer"
-          >
-            GitHub
-          </a>
-        </nav>
-      </header>
-
-      <FramingStrip open={framingOpen} onToggle={() => setFramingOpen((open) => !open)} />
-
-      <main className="flex-1 pt-5">
-        <Thread
-          thread={thread}
-          onReset={handleReset}
-          typingFrom={typingIn === mode ? thread.recipientLabel : undefined}
-          pending={pending}
-        >
-          <RecipientSwitch mode={mode} onChange={handleSwitch} />
-        </Thread>
-
-        {/*
-          The composer's furniture: the example replies, the send control and the
-          status line. The field itself is up in the pending draft surface.
-
-          **Not sticky, and that is the fix rather than an omission.** Sticky at
-          `bottom-0`, this block was lifted out of its own place in the document and
-          painted over whatever was behind it, which at 1280x900 was the guidance:
-          the surface ran to y=1072 while the bar sat at y=604..678, so `Use this`
-          and `Keep mine` were underneath it. Reserving space for it instead would
-          have kept a bar whose only remaining reason to be pinned had already gone:
-          it was pinned so the FIELD could not move under a live cursor, and the
-          field is not in it any more. What is left is a row of buttons and a status
-          line, none of which the visitor is mid-gesture in, and none of which is
-          worth covering an accept button for.
-        */}
-        <div className="mt-8 border-t border-hairline pt-4">
-          <Composer
-            mode={mode}
-            status={status}
-            requestsSinceReady={requestsSinceReady}
-            findings={shown}
-            /* The same `hasDraft` the guidance zone reads, so the send control and
-               the guidance can never disagree about whether there is a draft. It is
-               also the exact condition `handleSend` bails on, which is what makes
-               the disabled state honest rather than decorative. */
-            draftEmpty={!hasDraft}
-            onInsert={handleInsert}
-            onSend={handleSend}
-          />
-        </div>
-
-        {/* The concrete answer to "so how would anyone ever know?": a record can
-            exist for the sender without existing for anyone else. Memory only,
-            gone on reload, recorded nowhere (T4.7.3). */}
-        {notes.length > 0 ? (
-          <section className="mt-8 border-t border-hairline pt-4">
-            <h2 className="text-sm font-medium text-ink">{COPY.notesHeading}</h2>
-            <p className="mt-1 text-xs text-ink-muted">{COPY.notesDisclaimer}</p>
-            <ul className="mt-3 flex flex-col gap-2">
-              {notes.map((note) => (
-                <li key={note.id} className="text-sm text-ink-secondary">
-                  <span className="font-mono text-2xs text-ink-muted">{note.time}</span>{" "}
-                  {note.text}
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
-      </main>
-
-      {/* Page-level small print, last on the page. It belonged to the pinned bar
-          while there was one; with the bar gone it is a footer, which is what it
-          always read as. The gap above it is removed so the page ends where the
-          content ends. */}
-      <p className="mt-4 max-w-reading pb-8 text-2xs text-ink-muted">{COPY.disclaimer}</p>
+      <Landing demoSlot={demoSlot} />
     </div>
   );
 }

@@ -224,7 +224,19 @@ export default function PressPage() {
             </ProseCallout>
           </div>
 
-          <ProseSection index="01" id="the-problem" title="The problem is human">
+          {/* Clear, unmissable way back to the working product. A reader who
+              arrives here first and is convinced must not hunt for it. */}
+          <div className="mt-8 flex justify-center">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 rounded-lg border border-edge bg-surface px-6 py-3 font-ui text-sm font-medium text-ink transition-colors hover:bg-sunken focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            >
+              Try it in this browser
+              <span aria-hidden="true" className="text-ink-secondary">→</span>
+            </Link>
+          </div>
+
+          <ProseSection index="01" id="the-problem" title="The problem is human" spaceAbove="default">
             <ProseP>
               Nobody sets out to over-promise. Someone is answering a customer
               who is waiting, before a meeting, and they write one sentence more
@@ -247,6 +259,7 @@ export default function PressPage() {
             index="02"
             id="the-rules-exist"
             title="The rules already exist"
+            spaceAbove="large"
           >
             <ProseP>
               Your company already knows you cannot promise guaranteed uptime
@@ -257,7 +270,7 @@ export default function PressPage() {
               whether their data stays in one region.
             </ProseP>
             <ProseP>
-              That wording is in a policy PDF, or a Confluence page, or a deck
+              That wording is in a policy PDF, or an internal wiki page, or a deck
               from a training session two years ago. The person typing the reply
               has four minutes before their next meeting. They are not going to
               open a policy document, search for the relevant section, and then
@@ -274,6 +287,7 @@ export default function PressPage() {
             index="03"
             id="the-moment"
             title="Put the rule at the moment of writing"
+            spaceAbove="default"
           >
             <ProseP>
               The useful moment is before the message leaves, while the sentence
@@ -305,7 +319,7 @@ export default function PressPage() {
             </ProseP>
           </ProseSection>
 
-          <ProseSection index="04" id="how-it-works" title="How it works">
+          <ProseSection index="04" id="how-it-works" title="How it works" spaceAbove="extra">
             <ProseP>
               The checker runs inside your browser tab. The first time you visit,
               it downloads once and stays in your browser cache. After that, every
@@ -337,6 +351,7 @@ export default function PressPage() {
             index="05"
             id="why-local"
             title="Why it runs on your machine"
+            spaceAbove="large"
           >
             <ProseP>
               This is a design constraint rather than a feature that was added
@@ -384,6 +399,7 @@ export default function PressPage() {
             index="06"
             id="not-built"
             title="What is deliberately not built"
+            spaceAbove="default"
           >
             <ProseList>
               <ProseListItem>
@@ -412,7 +428,7 @@ export default function PressPage() {
             </ProseList>
           </ProseSection>
 
-          <ProseSection index="07" id="the-rules" title="The rules, in full">
+          <ProseSection index="07" id="the-rules" title="The rules, in full" spaceAbove="extra">
             <ProseP>
               Eight rules ship in the demo. Six of them apply only when the
               recipient is outside your company, which is what makes the
@@ -438,7 +454,7 @@ export default function PressPage() {
             </ProseFigure>
           </ProseSection>
 
-          <ProseSection index="08" id="roadmap" title="What comes next">
+          <ProseSection index="08" id="roadmap" title="What comes next" spaceAbove="large">
             <ProseSubheading>
               The same checks inside the tools teams already use
             </ProseSubheading>
@@ -473,7 +489,7 @@ export default function PressPage() {
             </ProseP>
           </ProseSection>
 
-          <ProseSection index="09" id="disclaimer" title="One last thing">
+          <ProseSection index="09" id="disclaimer" title="One last thing" spaceAbove="large">
             <ProseCallout tone="quiet">
               <p className="font-ui text-sm">{COPY.disclaimer}</p>
             </ProseCallout>

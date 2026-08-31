@@ -1,7 +1,7 @@
 /**
  * The guard the press page did not have, and the drift it let through.
  *
- * Every component that carries user-visible copy has a tone test: `FramingStrip`,
+ * Every component that carries user-visible copy has a tone test: `Landing`,
  * `FindingCard` and `Composer` each keep their own off-limits list. The press page
  * carries more prose than all three together and had none, so four banned strings
  * were live on it at once: "you should not" in section 02, "the device" in the
@@ -50,9 +50,13 @@ const sections = (rendered: string) =>
 const outsideSections = (rendered: string) =>
   rendered.replace(/<section aria-labelledby="[^"]+"[^>]*>[\s\S]*?<\/section>/g, " ");
 
-/** The section eyebrows, which is where the running number lives. */
+/**
+ * The section numerals. Changed 2026-08-30 to be large editorial furniture
+ * rather than small eyebrows, so the pattern now looks for the numeral as a
+ * text-xl element with tabular-nums, not an uppercase label.
+ */
 const numbers = (rendered: string) =>
-  Array.from(rendered.matchAll(/<p class="[^"]*\buppercase\b[^"]*">([^<]*)<\/p>/g))
+  Array.from(rendered.matchAll(/<p class="[^"]*\btext-xl\b[^"]*\btabular-nums\b[^"]*">([^<]*)<\/p>/g))
     .map((m) => text(m[1]))
     .filter((t) => /^\d{2}$/.test(t));
 
